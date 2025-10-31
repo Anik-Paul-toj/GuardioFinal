@@ -1,3 +1,4 @@
+import { WalletConnect } from '@walletconnect/client';
 import { WalletConnectModal } from '@walletconnect/modal-react-native';
 import { ethers } from 'ethers';
 import 'react-native-get-random-values';
@@ -27,118 +28,75 @@ export const CONTRACT_CONFIG = {
   ]
 };
 
-// WalletConnect Project ID
-const PROJECT_ID = '04e0cc7fe3e6ca381994cb961c4ee8b3';
-
-// WalletConnect provider metadata
-const providerMetadata = {
-  name: 'GuardioFinal',
-  description: 'Blockchain-based Digital Tourist ID System',
-  url: 'https://guardio.app',
-  icons: ['https://avatars.githubusercontent.com/u/37784886'],
-  redirect: {
-    native: 'guardiofinal://wc',
-    universal: 'https://guardio.app/wc'
-  }
-};
-
-class RealWalletConnectService {
+class SimpleRealWalletConnectService {
   constructor() {
     this.provider = null;
     this.signer = null;
     this.contract = null;
     this.walletAddress = null;
     this.isConnected = false;
-    this.universalProvider = null;
-    this.modal = null;
+    this.connector = null;
   }
 
   // Initialize the WalletConnect service
   async initialize() {
     try {
-      console.log('Initializing real WalletConnect service...');
+      console.log('Initializing simple real WalletConnect service...');
       
-      // Initialize the modal
-      this.modal = new WalletConnectModal({
-        projectId: PROJECT_ID,
-        providerMetadata,
-        sessionParams: {
-          requiredNamespaces: {
-            eip155: {
-              methods: [
-                'eth_sendTransaction',
-                'eth_signTransaction',
-                'eth_sign',
-                'personal_sign',
-                'eth_signTypedData',
-              ],
-              chains: [`eip155:${POLYGON_AMOY_CONFIG.chainId}`],
-              events: ['chainChanged', 'accountsChanged'],
-            },
-          },
-        },
+      // Create WalletConnect connector
+      this.connector = new WalletConnect({
+        bridge: 'https://bridge.walletconnect.org',
+        qrcodeModal: WalletConnectModal,
       });
 
-      console.log('Real WalletConnect service initialized successfully');
+      // Set up event listeners
+      this.connector.on('connect', (error, payload) => {
+        if (error) {
+          console.error('WalletConnect connection error:', error);
+          throw error;
+        }
+
+        console.log('WalletConnect connected:', payload);
+        this.handleConnection(payload);
+      });
+
+      this.connector.on('session_update', (error, payload) => {
+        if (error) {
+          console.error('WalletConnect session update error:', error);
+          throw error;
+        }
+
+        console.log('WalletConnect session updated:', payload);
+        this.handleSessionUpdate(payload);
+      });
+
+      this.connector.on('disconnect', (error, payload) => {
+        if (error) {
+          console.error('WalletConnect disconnect error:', error);
+        }
+
+        console.log('WalletConnect disconnected:', payload);
+        this.handleDisconnection();
+      });
+
+      console.log('Simple real WalletConnect service initialized successfully');
     } catch (error) {
       console.error('Error initializing WalletConnect service:', error);
       throw error;
     }
   }
 
-  // Open the WalletConnect modal
-  async openModal() {
+  // Handle successful connection
+  async handleConnection(payload) {
     try {
-      console.log('Opening real WalletConnect modal...');
-
-      if (!this.modal) {
-        await this.initialize();
-      }
-
-      // Check if already connected
-      if (this.isConnected) {
-        console.log('Already connected to wallet');
-        return true;
-      }
-
-      // Subscribe to session events before opening modal
-      this.modal.onSessionConnect = (session) => {
-        console.log('Session connected:', session);
-        this.handleSessionConnect(session);
-      };
-
-      this.modal.onSessionDelete = () => {
-        console.log('Session deleted');
-        this.disconnect();
-      };
-
-      // Open the modal - this will show the QR code and wallet list
-      await this.modal.openModal();
-
-      return true;
-    } catch (error) {
-      console.error('Error opening WalletConnect modal:', error);
-      throw error;
-    }
-  }
-
-  // Handle session connection
-  async handleSessionConnect(session) {
-    try {
-      console.log('Handling session connection...');
+      const { accounts, chainId } = payload.params[0];
       
-      // Get the first account
-      const accounts = Object.values(session.namespaces)
-        .map((namespace) => namespace.accounts)
-        .flat();
-
-      if (accounts.length > 0) {
-        // Extract address from the first account (format: eip155:80002:0x...)
-        this.walletAddress = accounts[0].split(':')[2];
+      if (accounts && accounts.length > 0) {
+        this.walletAddress = accounts[0];
         this.isConnected = true;
 
-        // Store the session provider
-        this.provider = new ethers.providers.Web3Provider(this.modal.getWalletProvider());
+        // Create provider using the connector
+        this.provider = new ethers.providers.Web3Provider(this.connector);
         this.signer = this.provider.getSigner();
 
         // Initialize contract
@@ -153,7 +111,54 @@ class RealWalletConnectService {
         console.log('Successfully connected to wallet:', this.walletAddress);
       }
     } catch (error) {
-      console.error('Error handling session connect:', error);
+      console.error('Error handling connection:', error);
+      throw error;
+    }
+  }
+
+  // Handle session update
+  handleSessionUpdate(payload) {
+    const { accounts, chainId } = payload.params[0];
+    
+    if (accounts && accounts.length > 0) {
+      this.walletAddress = accounts[0];
+      console.log('Wallet address updated:', this.walletAddress);
+    }
+  }
+
+  // Handle disconnection
+  handleDisconnection() {
+    this.provider = null;
+    this.signer = null;
+    this.contract = null;
+    this.walletAddress = null;
+    this.isConnected = false;
+    console.log('Wallet disconnected');
+  }
+
+  // Open the WalletConnect modal
+  async openModal() {
+    try {
+      console.log('Opening WalletConnect modal...');
+
+      if (!this.connector) {
+        await this.initialize();
+      }
+
+      // Check if already connected
+      if (this.connector.connected) {
+        console.log('Already connected to wallet');
+        return true;
+      }
+
+      // Create new session
+      await this.connector.createSession({
+        chainId: POLYGON_AMOY_CONFIG.chainId,
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error opening WalletConnect modal:', error);
       throw error;
     }
   }
@@ -351,17 +356,11 @@ class RealWalletConnectService {
   // Disconnect wallet
   async disconnect() {
     try {
-      if (this.modal) {
-        await this.modal.disconnect();
+      if (this.connector && this.connector.connected) {
+        await this.connector.killSession();
       }
       
-      this.provider = null;
-      this.signer = null;
-      this.contract = null;
-      this.walletAddress = null;
-      this.isConnected = false;
-      
-      console.log('Wallet disconnected');
+      this.handleDisconnection();
     } catch (error) {
       console.error('Error disconnecting wallet:', error);
     }
@@ -369,11 +368,11 @@ class RealWalletConnectService {
 
   // Get modal instance for direct access
   getModal() {
-    return this.modal;
+    return this.connector;
   }
 }
 
 // Create and export a singleton instance
-const walletConnectService = new RealWalletConnectService();
+const walletConnectService = new SimpleRealWalletConnectService();
 
 export default walletConnectService;

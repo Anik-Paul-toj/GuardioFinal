@@ -1,4 +1,5 @@
 import { WalletConnectModal } from '@walletconnect/modal-react-native';
+import UniversalProvider from '@walletconnect/universal-provider';
 import { ethers } from 'ethers';
 import 'react-native-get-random-values';
 
@@ -56,30 +57,56 @@ class RealWalletConnectService {
   // Initialize the WalletConnect service
   async initialize() {
     try {
-      console.log('Initializing real WalletConnect service...');
+      console.log('Initializing WalletConnect service...');
       
       // Initialize the modal
       this.modal = new WalletConnectModal({
         projectId: PROJECT_ID,
-        providerMetadata,
-        sessionParams: {
-          requiredNamespaces: {
-            eip155: {
-              methods: [
-                'eth_sendTransaction',
-                'eth_signTransaction',
-                'eth_sign',
-                'personal_sign',
-                'eth_signTypedData',
-              ],
-              chains: [`eip155:${POLYGON_AMOY_CONFIG.chainId}`],
-              events: ['chainChanged', 'accountsChanged'],
-            },
-          },
-        },
+        metadata: providerMetadata,
+        themeMode: 'light',
+        themeVariables: {
+          '--wcm-color-bg-1': '#ffffff',
+          '--wcm-color-bg-2': '#f3f5f7',
+          '--wcm-color-bg-3': '#ffffff',
+          '--wcm-color-fg-1': '#1a202c',
+          '--wcm-color-fg-2': '#2d3748',
+          '--wcm-color-fg-3': '#4a5568',
+          '--wcm-accent-color': '#667eea',
+          '--wcm-font-family': 'SF Pro Display, system-ui, sans-serif',
+          '--wcm-border-radius-master': '12px',
+        }
       });
 
-      console.log('Real WalletConnect service initialized successfully');
+      // Initialize Universal Provider
+      this.universalProvider = await UniversalProvider.init({
+        projectId: PROJECT_ID,
+        metadata: providerMetadata,
+        relayUrl: 'wss://relay.walletconnect.com'
+      });
+
+      // Set up event listeners
+      this.universalProvider.on('display_uri', (uri) => {
+        console.log('WalletConnect URI:', uri);
+      });
+
+      this.universalProvider.on('session_ping', (args) => {
+        console.log('Session ping:', args);
+      });
+
+      this.universalProvider.on('session_event', (args) => {
+        console.log('Session event:', args);
+      });
+
+      this.universalProvider.on('session_update', ({ topic, params }) => {
+        console.log('Session update:', topic, params);
+      });
+
+      this.universalProvider.on('session_delete', ({ id, topic }) => {
+        console.log('Session deleted:', id, topic);
+        this.disconnect();
+      });
+
+      console.log('WalletConnect service initialized successfully');
     } catch (error) {
       console.error('Error initializing WalletConnect service:', error);
       throw error;
@@ -89,9 +116,9 @@ class RealWalletConnectService {
   // Open the WalletConnect modal
   async openModal() {
     try {
-      console.log('Opening real WalletConnect modal...');
+      console.log('Opening WalletConnect modal...');
 
-      if (!this.modal) {
+      if (!this.universalProvider) {
         await this.initialize();
       }
 
@@ -101,59 +128,73 @@ class RealWalletConnectService {
         return true;
       }
 
-      // Subscribe to session events before opening modal
-      this.modal.onSessionConnect = (session) => {
-        console.log('Session connected:', session);
-        this.handleSessionConnect(session);
+      // Define the chains and methods we want to support
+      const requiredNamespaces = {
+        eip155: {
+          methods: [
+            'eth_sendTransaction',
+            'eth_signTransaction',
+            'eth_sign',
+            'personal_sign',
+            'eth_signTypedData',
+          ],
+          chains: [`eip155:${POLYGON_AMOY_CONFIG.chainId}`],
+          events: ['chainChanged', 'accountsChanged'],
+        },
       };
 
-      this.modal.onSessionDelete = () => {
-        console.log('Session deleted');
-        this.disconnect();
-      };
+      // Connect using the universal provider
+      const session = await this.universalProvider.connect({
+        requiredNamespaces,
+      });
 
-      // Open the modal - this will show the QR code and wallet list
-      await this.modal.openModal();
+      if (session) {
+        // Get the first account
+        const accounts = Object.values(session.namespaces)
+          .map((namespace) => namespace.accounts)
+          .flat();
 
-      return true;
+        if (accounts.length > 0) {
+          // Extract address from the first account (format: eip155:80002:0x...)
+          this.walletAddress = accounts[0].split(':')[2];
+          this.isConnected = true;
+
+          // Setup provider and signer
+          await this.setupProvider();
+
+          console.log('Successfully connected to wallet:', this.walletAddress);
+          return true;
+        }
+      }
+
+      throw new Error('No accounts found');
     } catch (error) {
       console.error('Error opening WalletConnect modal:', error);
       throw error;
     }
   }
 
-  // Handle session connection
-  async handleSessionConnect(session) {
+  // Setup provider after connection
+  async setupProvider() {
     try {
-      console.log('Handling session connection...');
-      
-      // Get the first account
-      const accounts = Object.values(session.namespaces)
-        .map((namespace) => namespace.accounts)
-        .flat();
+      console.log('Setting up Web3 provider...');
 
-      if (accounts.length > 0) {
-        // Extract address from the first account (format: eip155:80002:0x...)
-        this.walletAddress = accounts[0].split(':')[2];
-        this.isConnected = true;
+      // Create ethers provider using the universal provider
+      this.provider = new ethers.providers.Web3Provider(this.universalProvider);
+      this.signer = this.provider.getSigner();
 
-        // Store the session provider
-        this.provider = new ethers.providers.Web3Provider(this.modal.getWalletProvider());
-        this.signer = this.provider.getSigner();
-
-        // Initialize contract
-        if (CONTRACT_CONFIG.address && CONTRACT_CONFIG.abi) {
-          this.contract = new ethers.Contract(
-            CONTRACT_CONFIG.address,
-            CONTRACT_CONFIG.abi,
-            this.signer
-          );
-        }
-
-        console.log('Successfully connected to wallet:', this.walletAddress);
+      // Initialize contract
+      if (CONTRACT_CONFIG.address && CONTRACT_CONFIG.abi) {
+        this.contract = new ethers.Contract(
+          CONTRACT_CONFIG.address,
+          CONTRACT_CONFIG.abi,
+          this.signer
+        );
       }
+
+      console.log('Provider setup complete');
     } catch (error) {
-      console.error('Error handling session connect:', error);
+      console.error('Error setting up provider:', error);
       throw error;
     }
   }
@@ -351,8 +392,8 @@ class RealWalletConnectService {
   // Disconnect wallet
   async disconnect() {
     try {
-      if (this.modal) {
-        await this.modal.disconnect();
+      if (this.universalProvider) {
+        await this.universalProvider.disconnect();
       }
       
       this.provider = null;

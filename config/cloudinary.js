@@ -10,6 +10,7 @@ export const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${cloudina
 
 /**
  * Simple image upload to Cloudinary (for demo purposes)
+ * 
  * Falls back to local URI if Cloudinary upload fails
  * @param {string} imageUri - Local image URI
  * @returns {Promise<string>} - Cloudinary image URL or local URI as fallback

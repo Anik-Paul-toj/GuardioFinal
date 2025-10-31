@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import SimpleWalletConnectButton from '../../components/SimpleWalletConnectButton';
 import { auth } from '../../config/firebase';
 import { getUserProfile } from '../../services/userService';
 
@@ -182,6 +183,16 @@ export default function HomeScreen() {
             </LinearGradient>
           </View>
         )}
+
+        {/* Test WalletConnect */}
+        <View style={styles.testSection}>
+          <Text style={styles.testTitle}>Test WalletConnect</Text>
+          <SimpleWalletConnectButton 
+            onConnected={(address) => {
+              console.log('Wallet connected:', address);
+            }}
+          />
+        </View>
 
         {/* Features Grid */}
         <View style={styles.featuresContainer}>
@@ -415,5 +426,19 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
     lineHeight: 16,
+  },
+  testSection: {
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  testTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2d3436',
+    marginBottom: 16,
+    textAlign: 'center',
   },
 });

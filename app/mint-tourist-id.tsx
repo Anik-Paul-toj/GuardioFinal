@@ -21,7 +21,7 @@ import {
 import WalletConnector from '../components/WalletConnector';
 import { uploadImageSimple } from '../config/cloudinary';
 import { auth } from '../config/firebase';
-import blockchainService from '../services/blockchainService';
+import directWalletService from '../services/directWalletService';
 import { getUserProfile, saveUserProfile } from '../services/userService';
 
 const { width, height } = Dimensions.get('window');
@@ -213,8 +213,8 @@ export default function MintTouristIdScreen() {
         photoUrl: photoUri,
       };
 
-      // Mint NFT on blockchain
-      const mintResult = await blockchainService.mintTouristID(profileData);
+      // Mint NFT on blockchain using direct wallet service
+      const mintResult = await directWalletService.mintTouristID(profileData);
 
       // Update profile with blockchain information
       const updatedProfile = {

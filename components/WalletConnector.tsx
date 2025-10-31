@@ -10,7 +10,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import blockchainService, { POLYGON_AMOY_CONFIG } from '../services/blockchainService';
+import directWalletService, { POLYGON_AMOY_CONFIG } from '../services/directWalletService';
 
 const { width } = Dimensions.get('window');
 
@@ -38,6 +38,11 @@ export default function WalletConnector({
   const [checking, setChecking] = useState(false);
 
   useEffect(() => {
+    // Initialize Direct Wallet service
+    directWalletService.initialize().catch(console.error);
+  }, []);
+
+  useEffect(() => {
     if (visible && walletInfo) {
       checkExistingTouristID();
     }
@@ -47,32 +52,41 @@ export default function WalletConnector({
     setConnecting(true);
     
     try {
-      const info = await blockchainService.connectWallet();
-      const balance = await blockchainService.getBalance();
+      // Connect wallet directly (no QR code)
+      await directWalletService.connectWallet();
       
-      const walletData = {
-        address: info.address,
-        balance,
-        network: info.network,
-      };
-      
-      setWalletInfo(walletData);
-      onWalletConnected(walletData);
-      
-      Alert.alert(
-        'Wallet Connected! 🎉',
-        `Address: ${info.address.substring(0, 6)}...${info.address.substring(38)}\\nBalance: ${parseFloat(balance).toFixed(4)} MATIC`,
-        [{ text: 'OK' }]
-      );
+      // Check if connection was successful
+      const isConnected = directWalletService.isWalletConnected();
+      if (isConnected) {
+        const address = directWalletService.getWalletAddress();
+        const balance = await directWalletService.getBalance();
+        
+        if (!address) {
+          throw new Error('No wallet address found');
+        }
+        
+        const walletData: WalletInfo = {
+          address,
+          balance,
+          network: { chainId: POLYGON_AMOY_CONFIG.chainId },
+        };
+        
+        setWalletInfo(walletData);
+        onWalletConnected(walletData);
+        
+        Alert.alert(
+          'Wallet Connected! 🎉',
+          `Address: ${address.substring(0, 6)}...${address.substring(38)}\\nBalance: ${parseFloat(balance).toFixed(4)} MATIC`,
+          [{ text: 'OK' }]
+        );
+      }
       
     } catch (error: any) {
       console.error('Wallet connection error:', error);
       
       let errorMessage = 'Failed to connect wallet. Please try again.';
       
-      if (error.message.includes('No crypto wallet found')) {
-        errorMessage = 'Please install MetaMask or another crypto wallet to continue.';
-      } else if (error.message.includes('User rejected')) {
+      if (error.message.includes('User rejected')) {
         errorMessage = 'Connection request was rejected. Please try again.';
       }
       
@@ -87,7 +101,7 @@ export default function WalletConnector({
     
     setChecking(true);
     try {
-      const existingID = await blockchainService.checkUserTouristID();
+      const existingID = await directWalletService.checkUserTouristID();
       
       if (existingID) {
         Alert.alert(
@@ -145,7 +159,7 @@ export default function WalletConnector({
         <View style={styles.modalContent}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Connect Wallet</Text>
+            <Text style={styles.title}>Connect MetaMask</Text>
             <TouchableOpacity onPress={onClose}>
               <Ionicons name="close" size={24} color="#666" />
             </TouchableOpacity>
@@ -159,13 +173,17 @@ export default function WalletConnector({
                 style={styles.walletCard}
               >
                 <Ionicons name="wallet" size={48} color="white" />
-                <Text style={styles.walletCardTitle}>MetaMask Wallet</Text>
+                <Text style={styles.walletCardTitle}>Connect MetaMask</Text>
                 <Text style={styles.walletCardDescription}>
-                  Connect your MetaMask wallet to mint your Tourist ID NFT on Polygon Amoy testnet
+                  Tap below to open MetaMask directly and connect your wallet to mint your Tourist ID NFT on Polygon Amoy testnet
                 </Text>
               </LinearGradient>
 
               <View style={styles.infoSection}>
+                <View style={styles.infoItem}>
+                  <Ionicons name="phone-portrait" size={20} color="#e74c3c" />
+                  <Text style={styles.infoText}>Opens MetaMask directly</Text>
+                </View>
                 <View style={styles.infoItem}>
                   <Ionicons name="shield-checkmark" size={20} color="#2ecc71" />
                   <Text style={styles.infoText}>Secure blockchain storage</Text>
@@ -195,7 +213,7 @@ export default function WalletConnector({
                     color="white" 
                   />
                   <Text style={styles.connectButtonText}>
-                    {connecting ? 'Connecting...' : 'Connect MetaMask'}
+                    {connecting ? 'Opening MetaMask...' : 'Open MetaMask'}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
