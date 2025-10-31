@@ -18,11 +18,11 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import WalletConnector from '../components/WalletConnector';
 import { uploadImageSimple } from '../config/cloudinary';
 import { auth } from '../config/firebase';
-import { getUserProfile, saveUserProfile } from '../services/userService';
-import WalletConnector from '../components/WalletConnector';
 import blockchainService from '../services/blockchainService';
+import { getUserProfile, saveUserProfile } from '../services/userService';
 
 const { width, height } = Dimensions.get('window');
 

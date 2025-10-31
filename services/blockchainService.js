@@ -1,5 +1,5 @@
-import 'react-native-get-random-values';
 import { ethers } from 'ethers';
+import 'react-native-get-random-values';
 
 // Polygon Amoy Testnet Configuration
 export const POLYGON_AMOY_CONFIG = {
