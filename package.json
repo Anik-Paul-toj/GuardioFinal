@@ -8,12 +8,15 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "signaling-server": "node scripts/signaling-server.js",
+    "dev": "npm run signaling-server & expo start",
+    "dev:windows": "start cmd /k \"node scripts/signaling-server.js\" && expo start"
   },
   "dependencies": {
     "@expo/dev-tools": "^0.13.187",
     "@expo/vector-icons": "^15.0.3",
-    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-async-storage/async-storage": "^1.24.0",
     "@react-native-google-signin/google-signin": "^16.0.0",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
@@ -55,13 +58,15 @@
     "react-native-svg": "^15.14.0",
     "react-native-url-polyfill": "^3.0.0",
     "react-native-web": "~0.21.0",
+    "react-native-webrtc": "^124.0.7",
     "react-native-worklets": "0.5.1"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "ws": "^8.18.3"
   },
   "private": true
 }

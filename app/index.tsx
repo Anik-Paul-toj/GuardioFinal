@@ -1,13 +1,6 @@
-import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { Redirect } from 'expo-router';
 
 export default function Index() {
-  const router = useRouter();
-
-  useEffect(() => {
-    // Redirect to auth screen on app start
-    router.replace('/auth');
-  }, []);
-
-  return null;
+  // Use Redirect component which safely waits for router to be ready
+  return <Redirect href="/auth" />;
 }
