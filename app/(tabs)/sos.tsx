@@ -13,6 +13,7 @@ import {
   Platform,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -337,10 +338,14 @@ export default function SOSScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
+        {/* Modern Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Emergency Services</Text>
-          <Text style={styles.subtitle}>Get help when you need it most</Text>
+          <View style={styles.headerTop}>
+            <View>
+              <Text style={styles.greeting}>Emergency Services</Text>
+              <Text style={styles.subtitle}>Get help when you need it most</Text>
+            </View>
+          </View>
         </View>
 
         {/* SOS Button */}
@@ -351,8 +356,10 @@ export default function SOSScreen() {
             disabled={sosActive}
           >
             <LinearGradient
-              colors={sosActive ? ['#c0392b', '#8b0000'] : ['#e74c3c', '#c0392b']}
+              colors={sosActive ? ['#c0392b', '#8b0000'] : ['#FF5757', '#FF1744']}
               style={styles.sosButtonGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
             >
               <Ionicons 
                 name={sosActive ? "checkmark-circle" : "warning"} 
@@ -372,24 +379,55 @@ export default function SOSScreen() {
         {/* Status Indicators */}
         <View style={styles.statusSection}>
           <View style={styles.statusCard}>
-            <Ionicons 
-              name={location ? "location" : "location-outline"} 
-              size={24} 
-              color={location ? "#27ae60" : "#e74c3c"} 
-            />
-            <Text style={styles.statusText}>
-              Location: {location ? 'Available' : 'Unavailable'}
-            </Text>
+            <View style={styles.statusIconContainer}>
+              <Ionicons 
+                name={location ? "location" : "location-outline"} 
+                size={24} 
+                color={location ? "#4CAF50" : "#FF5757"} 
+              />
+            </View>
+            <View style={styles.statusInfo}>
+              <Text style={styles.statusLabel}>Location</Text>
+              <Text style={styles.statusValue}>{location ? 'Available' : 'Unavailable'}</Text>
+            </View>
           </View>
           <View style={styles.statusCard}>
-            <Ionicons 
-              name={meshConnected ? "wifi" : "wifi-outline"} 
-              size={24} 
-              color={meshConnected ? "#27ae60" : "#e74c3c"} 
-            />
-            <Text style={styles.statusText}>
-              Mesh: {peerCount} {peerCount === 1 ? 'peer' : 'peers'}
-            </Text>
+            <View style={styles.statusIconContainer}>
+              <Ionicons 
+                name={meshConnected ? "wifi" : "wifi-outline"} 
+                size={24} 
+                color={meshConnected ? "#4CAF50" : "#FF5757"} 
+              />
+            </View>
+            <View style={styles.statusInfo}>
+              <Text style={styles.statusLabel}>Mesh Network</Text>
+              <Text style={styles.statusValue}>{peerCount} {peerCount === 1 ? 'peer' : 'peers'}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Emergency Contacts */}
+        <View style={styles.contactsSection}>
+          <Text style={styles.sectionTitle}>Emergency Contacts</Text>
+          <View style={styles.contactsGrid}>
+            {emergencyContacts.map((contact, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.contactCard}
+                onPress={() => callEmergency(contact)}
+              >
+                <LinearGradient 
+                  colors={contact.color as [string, string]} 
+                  style={styles.contactCardGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Ionicons name={contact.icon as any} size={32} color="white" />
+                  <Text style={styles.contactName}>{contact.name}</Text>
+                  <Text style={styles.contactNumber}>{contact.number}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
@@ -597,26 +635,6 @@ export default function SOSScreen() {
           </View>
         )}
 
-        {/* Emergency Contacts */}
-        <View style={styles.contactsSection}>
-          <Text style={styles.sectionTitle}>Emergency Contacts</Text>
-          <View style={styles.contactsGrid}>
-            {emergencyContacts.map((contact, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.contactCard}
-                onPress={() => callEmergency(contact)}
-              >
-                <LinearGradient colors={contact.color} style={styles.contactCardGradient}>
-                  <Ionicons name={contact.icon as any} size={32} color="white" />
-                  <Text style={styles.contactName}>{contact.name}</Text>
-                  <Text style={styles.contactNumber}>{contact.number}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
         {/* Quick Actions */}
         <View style={styles.actionsSection}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -650,17 +668,26 @@ export default function SOSScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F5F7FA',
   },
   scrollContent: {
     paddingBottom: 100,
   },
   header: {
     padding: 20,
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 60,
+    backgroundColor: '#F5F7FA',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  greeting: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1A1A2E',
+    marginBottom: 4,
   },
   title: {
     fontSize: 28,
@@ -669,30 +696,30 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#636e72',
-    textAlign: 'center',
+    fontSize: 14,
+    color: '#7C8BA0',
+    marginTop: 4,
   },
   sosSection: {
     padding: 20,
-    alignItems: 'center',
+    paddingTop: 10,
   },
   sosButton: {
-    width: width * 0.8,
+    width: '100%',
     height: 200,
-    borderRadius: 20,
+    borderRadius: 25,
     elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#FF5757',
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: 12,
   },
   sosButtonActive: {
     elevation: 4,
   },
   sosButtonGradient: {
     flex: 1,
-    borderRadius: 20,
+    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -712,22 +739,44 @@ const styles = StyleSheet.create({
   },
   statusSection: {
     flexDirection: 'row',
-    padding: 20,
-    gap: 10,
+    paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 10,
   },
   statusCard: {
     flex: 1,
     backgroundColor: 'white',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    elevation: 2,
+    gap: 12,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
+  statusIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#F5F7FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statusInfo: {
+    flex: 1,
+  },
+  statusLabel: {
+    fontSize: 12,
+    color: '#7C8BA0',
+    marginBottom: 2,
+  },
+  statusValue: {
+    fontSize: 14,
+    color: '#1A1A2E',
+    fontWeight: '600',
   },
   statusText: {
     fontSize: 14,
@@ -739,8 +788,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2d3436',
+    fontWeight: '700',
+    color: '#1A1A2E',
     marginBottom: 16,
   },
   contactsGrid: {
@@ -749,18 +798,18 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   contactCard: {
-    width: (width - 60) / 2,
-    height: 120,
-    borderRadius: 16,
+    width: (width - 52) / 2,
+    height: 140,
+    borderRadius: 20,
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   contactCardGradient: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
     justifyContent: 'center',
     alignItems: 'center',
@@ -779,21 +828,22 @@ const styles = StyleSheet.create({
   },
   actionsSection: {
     padding: 20,
+    paddingTop: 10,
   },
   actionButton: {
     marginBottom: 12,
-    borderRadius: 12,
-    elevation: 2,
+    borderRadius: 15,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   actionButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 15,
     gap: 12,
   },
   actionButtonText: {
@@ -803,18 +853,19 @@ const styles = StyleSheet.create({
   },
   alertsSection: {
     padding: 20,
+    paddingTop: 10,
     maxHeight: 300,
   },
   alertsList: {
     maxHeight: 250,
   },
   alertCard: {
-    backgroundColor: '#fee',
+    backgroundColor: '#FFE5E5',
     borderWidth: 1,
-    borderColor: '#fcc',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
+    borderColor: '#FFB3B3',
+    borderRadius: 15,
+    padding: 14,
+    marginBottom: 10,
   },
   alertHeader: {
     flexDirection: 'row',
@@ -842,17 +893,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     marginHorizontal: 20,
     marginTop: 10,
-    borderRadius: 12,
-    elevation: 2,
+    borderRadius: 20,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   configLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2d3436',
+    color: '#1A1A2E',
     marginBottom: 8,
   },
   inputContainer: {
@@ -860,43 +911,43 @@ const styles = StyleSheet.create({
   },
   roomIdInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderColor: '#E5E8EB',
+    borderRadius: 12,
     padding: 12,
     fontSize: 14,
-    backgroundColor: '#f8f9fa',
-    color: '#2d3436',
+    backgroundColor: '#F5F7FA',
+    color: '#1A1A2E',
   },
   configHint: {
     fontSize: 11,
-    color: '#636e72',
+    color: '#7C8BA0',
     marginTop: 4,
   },
   connectSection: {
     marginTop: 16,
   },
   connectButton: {
-    borderRadius: 8,
-    elevation: 2,
+    borderRadius: 12,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 4,
   },
   disconnectButton: {
-    borderRadius: 8,
-    elevation: 2,
+    borderRadius: 12,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 4,
   },
   connectButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 14,
-    borderRadius: 8,
+    borderRadius: 12,
     gap: 8,
   },
   connectButtonText: {
@@ -905,18 +956,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   connectingButton: {
-    backgroundColor: '#fff3cd',
+    backgroundColor: '#FFF8E1',
     padding: 14,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ffc107',
+    borderColor: '#FFC107',
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
   },
   connectingText: {
-    color: '#856404',
+    color: '#F57C00',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -924,7 +975,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
+    borderTopColor: '#E5E8EB',
   },
   connectionStatus: {
     flexDirection: 'row',
@@ -938,10 +989,10 @@ const styles = StyleSheet.create({
   },
   warningBox: {
     flexDirection: 'row',
-    backgroundColor: '#fff3cd',
+    backgroundColor: '#FFF8E1',
     borderWidth: 1,
-    borderColor: '#ffc107',
-    borderRadius: 8,
+    borderColor: '#FFD54F',
+    borderRadius: 12,
     padding: 12,
     marginBottom: 16,
     gap: 12,
@@ -954,11 +1005,11 @@ const styles = StyleSheet.create({
   warningTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#856404',
+    color: '#F57C00',
   },
   warningText: {
     fontSize: 12,
-    color: '#856404',
+    color: '#F57C00',
     lineHeight: 16,
   },
   disabledButton: {
@@ -977,16 +1028,16 @@ const styles = StyleSheet.create({
   },
   quickButton: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F5F7FA',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
+    borderColor: '#E5E8EB',
+    borderRadius: 8,
     padding: 8,
     alignItems: 'center',
   },
   quickButtonText: {
     fontSize: 12,
-    color: '#2d3436',
+    color: '#1A1A2E',
     fontWeight: '500',
   },
 });

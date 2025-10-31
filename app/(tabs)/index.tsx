@@ -11,16 +11,17 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import SimpleWalletConnectButton from '../../components/SimpleWalletConnectButton';
 import { auth } from '../../config/firebase';
+import { removeUserFromStorage } from '../../services/authStorageService';
 import { getUserProfile } from '../../services/userService';
 
 const { width } = Dimensions.get('window');
 
 interface UserProfile {
   touristIdMinted?: boolean;
+  fullName?: string;
   [key: string]: any;
 }
 
@@ -28,14 +29,16 @@ interface FeatureCardProps {
   icon: string;
   title: string;
   description: string;
-  color: readonly [string, string];
+  colors: readonly [string, string];
   onPress: () => void;
 }
 
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, color, onPress }) => (
-  <TouchableOpacity style={styles.featureCard} onPress={onPress}>
-    <LinearGradient colors={color} style={styles.featureCardGradient}>
-      <Ionicons name={icon as any} size={32} color="white" />
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, colors, onPress }) => (
+  <TouchableOpacity style={styles.featureCard} onPress={onPress} activeOpacity={0.8}>
+    <LinearGradient colors={colors} style={styles.featureCardGradient}>
+      <View style={styles.featureIconContainer}>
+        <Ionicons name={icon as any} size={40} color="white" />
+      </View>
       <Text style={styles.featureCardTitle}>{title}</Text>
       <Text style={styles.featureCardDescription}>{description}</Text>
     </LinearGradient>
@@ -95,10 +98,19 @@ export default function HomeScreen() {
           text: 'Logout', 
           onPress: async () => {
             try {
+              // Sign out from Firebase
               await auth.signOut();
+              
+              // Clear user data from AsyncStorage
+              await removeUserFromStorage();
+              
+              console.log('User logged out successfully');
+              
+              // Navigate to auth screen
               router.replace('/auth');
             } catch (error) {
               console.error('Logout error:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
             }
           }
         }
@@ -115,330 +127,365 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScrollView 
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        style={styles.header}
+    <View style={styles.container}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
-        <View style={styles.headerContent}>
-          <Text style={styles.welcomeText}>Welcome to</Text>
-          <Text style={styles.appTitle}>Guardio</Text>
-          <Text style={styles.subtitle}>Your Secure Digital Identity Platform</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.menuButton}>
+            <Ionicons name="menu" size={24} color="#333" />
+          </TouchableOpacity>
           
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={20} color="white" />
-            <Text style={styles.logoutText}>Logout</Text>
+          <View style={styles.greetingSection}>
+            <Text style={styles.greetingText}>Good Morning</Text>
+            <Text style={styles.userName}>{userProfile?.fullName || user?.email?.split('@')[0] || 'Traveler'}!</Text>
+          </View>
+          
+          <TouchableOpacity style={styles.profileIcon} onPress={handleLogout}>
+            <Ionicons name="person-circle" size={40} color="#667eea" />
           </TouchableOpacity>
         </View>
-      </LinearGradient>
 
-      <View style={styles.content}>
-        {/* Tourist ID Status Card */}
+        {/* Tourist ID Status Banner */}
         {!hasTouristId ? (
           <TouchableOpacity 
-            style={styles.mintCard}
+            style={styles.bannerCard}
             onPress={() => router.push('/mint-tourist-id')}
+            activeOpacity={0.9}
           >
             <LinearGradient
-              colors={['#ff6b6b', '#ee5a24']}
-              style={styles.mintCardGradient}
+              colors={['#FF6B9D', '#FFA07A']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.bannerGradient}
             >
-              <View style={styles.mintCardContent}>
-                <Ionicons name="shield-outline" size={48} color="white" />
-                <Text style={styles.mintCardTitle}>Create Your Digital ID</Text>
-                <Text style={styles.mintCardSubtitle}>
-                  Verify your identity and get your secure digital tourist ID
-                </Text>
-                <View style={styles.mintButton}>
-                  <Text style={styles.mintButtonText}>Get Started</Text>
-                  <Ionicons name="arrow-forward" size={20} color="white" />
+              <View style={styles.bannerContent}>
+                <View>
+                  <Text style={styles.bannerTitle}>Get Your Digital ID</Text>
+                  <Text style={styles.bannerSubtitle}>Secure your travel identity</Text>
+                  <TouchableOpacity style={styles.bannerButton}>
+                    <Text style={styles.bannerButtonText}>Reserve Now</Text>
+                    <Ionicons name="arrow-forward" size={16} color="white" />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.bannerIconContainer}>
+                  <Ionicons name="shield-checkmark" size={80} color="rgba(255,255,255,0.3)" />
                 </View>
               </View>
             </LinearGradient>
           </TouchableOpacity>
         ) : (
-          <View style={styles.idStatusCard}>
+          <View style={styles.bannerCard}>
             <LinearGradient
-              colors={['#00b894', '#00a085']}
-              style={styles.idStatusGradient}
+              colors={['#00D084', '#00C9A7']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.bannerGradient}
             >
-              <View style={styles.idStatusContent}>
-                <Ionicons name="shield-checkmark" size={48} color="white" />
-                <Text style={styles.idStatusTitle}>Digital ID Active</Text>
-                <Text style={styles.idStatusSubtitle}>
-                  Your digital identity is verified and secure
-                </Text>
-                <TouchableOpacity 
-                  style={styles.viewIdButton}
-                  onPress={() => router.push('/(tabs)/my-id')}
-                >
-                  <Text style={styles.viewIdButtonText}>View Details</Text>
-                </TouchableOpacity>
+              <View style={styles.bannerContent}>
+                <View>
+                  <Text style={styles.bannerTitle}>Digital ID Active</Text>
+                  <Text style={styles.bannerSubtitle}>Your identity is verified</Text>
+                  <TouchableOpacity 
+                    style={styles.bannerButton}
+                    onPress={() => router.push('/(tabs)/my-id')}
+                  >
+                    <Text style={styles.bannerButtonText}>View Details</Text>
+                    <Ionicons name="arrow-forward" size={16} color="white" />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.bannerIconContainer}>
+                  <Ionicons name="checkmark-circle" size={80} color="rgba(255,255,255,0.3)" />
+                </View>
               </View>
             </LinearGradient>
           </View>
         )}
 
-        {/* Test WalletConnect */}
-        <View style={styles.testSection}>
-          <Text style={styles.testTitle}>Test WalletConnect</Text>
-          <SimpleWalletConnectButton 
-            onConnected={(address) => {
-              console.log('Wallet connected:', address);
-            }}
-          />
-        </View>
-
         {/* Features Grid */}
-        <View style={styles.featuresContainer}>
-          <Text style={styles.featuresTitle}>Platform Features</Text>
-          
+        <View style={styles.contentSection}>
           <View style={styles.featuresGrid}>
             <FeatureCard
-              icon="document-text-outline"
-              title="Identity Verification"
-              description="Secure passport & ID verification"
-              color={['#74b9ff', '#0984e3']}
+              icon="shield-checkmark-outline"
+              title="Digital ID"
+              description="Secure identity verification"
+              colors={['#FFB800', '#FFA500']}
               onPress={() => router.push('/personal-id')}
             />
             
             <FeatureCard
+              icon="pulse-outline"
+              title="SOS Alert"
+              description="Emergency assistance"
+              colors={['#00D9FF', '#00B8D4']}
+              onPress={() => router.push('/(tabs)/sos')}
+            />
+            
+            <FeatureCard
+              icon="location-outline"
+              title="Tracking"
+              description="Real-time location"
+              colors={['#FF6B9D', '#E91E63']}
+              onPress={() => router.push('/(tabs)/tracking')}
+            />
+            
+            <FeatureCard
               icon="globe-outline"
-              title="Travel Records"
-              description="Track your travel history"
-              color={['#a29bfe', '#6c5ce7']}
-              onPress={() => Alert.alert('Coming Soon', 'Travel records feature will be available soon!')}
-            />
-            
-            <FeatureCard
-              icon="lock-closed-outline"
-              title="Secure Storage"
-              description="Your data is safely protected"
-              color={['#fd79a8', '#e84393']}
-              onPress={() => Alert.alert('Security', 'Your data is protected with advanced encryption!')}
-            />
-            
-            <FeatureCard
-              icon="card-outline"
-              title="Digital Services"
-              description="Access tourist services easily"
-              color={['#fdcb6e', '#e17055']}
-              onPress={() => Alert.alert('Coming Soon', 'Digital services feature will be available soon!')}
+              title="Explore"
+              description="Discover places"
+              colors={['#9C27B0', '#7B1FA2']}
+              onPress={() => router.push('/(tabs)/explore')}
             />
           </View>
         </View>
-      </View>
-    </ScrollView>
+
+        {/* Quick Actions */}
+        <View style={styles.contentSection}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          
+          <TouchableOpacity 
+            style={styles.actionCard}
+            onPress={() => router.push('/(tabs)/my-id')}
+          >
+            <View style={[styles.actionIconBox, { backgroundColor: '#E3F2FD' }]}>
+              <Ionicons name="card-outline" size={24} color="#2196F3" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>View My ID</Text>
+              <Text style={styles.actionSubtitle}>Access your digital identity</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionCard}
+            onPress={() => Alert.alert('Coming Soon', 'Travel history feature will be available soon!')}
+          >
+            <View style={[styles.actionIconBox, { backgroundColor: '#F3E5F5' }]}>
+              <Ionicons name="airplane-outline" size={24} color="#9C27B0" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Travel History</Text>
+              <Text style={styles.actionSubtitle}>View your travel records</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionCard}
+            onPress={() => Alert.alert('Security', 'Your data is protected with blockchain technology!')}
+          >
+            <View style={[styles.actionIconBox, { backgroundColor: '#E8F5E9' }]}>
+              <Ionicons name="lock-closed-outline" size={24} color="#4CAF50" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Security Settings</Text>
+              <Text style={styles.actionSubtitle}>Manage your privacy</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Bottom Padding */}
+        <View style={{ height: 30 }} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#FAFAFA',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#FAFAFA',
   },
   loadingText: {
     fontSize: 18,
     color: '#666',
   },
+  // Header Styles
   header: {
-    paddingTop: 60,
-    paddingBottom: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    backgroundColor: '#FAFAFA',
   },
-  headerContent: {
+  menuButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  welcomeText: {
-    fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.8)',
+  greetingSection: {
+    flex: 1,
+    marginLeft: 15,
+  },
+  greetingText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 2,
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  profileIcon: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Banner Card Styles
+  bannerCard: {
+    marginHorizontal: 20,
+    marginVertical: 20,
+    borderRadius: 20,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  bannerGradient: {
+    padding: 25,
+    minHeight: 160,
+  },
+  bannerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  bannerTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: 'white',
     marginBottom: 5,
   },
-  appTitle: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
+  bannerSubtitle: {
+    fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 15,
   },
-  logoutButton: {
+  bannerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 20,
-    gap: 8,
+    gap: 5,
   },
-  logoutText: {
+  bannerButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
-  content: {
-    padding: 20,
+  bannerIconContainer: {
+    position: 'absolute',
+    right: -10,
+    bottom: -10,
   },
-  mintCard: {
-    marginBottom: 30,
-    borderRadius: 16,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+  // Content Section
+  contentSection: {
+    paddingHorizontal: 20,
+    marginBottom: 25,
   },
-  mintCardGradient: {
-    borderRadius: 16,
-    padding: 24,
-  },
-  mintCardContent: {
-    alignItems: 'center',
-  },
-  mintCardTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  mintCardSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 24,
-  },
-  mintButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 25,
-    gap: 8,
-  },
-  mintButtonText: {
-    color: 'white',
+  sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-  },
-  idStatusCard: {
-    marginBottom: 30,
-    borderRadius: 16,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  idStatusGradient: {
-    borderRadius: 16,
-    padding: 24,
-  },
-  idStatusContent: {
-    alignItems: 'center',
-  },
-  idStatusTitle: {
-    fontSize: 24,
     fontWeight: 'bold',
-    color: 'white',
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
+    color: '#333',
+    marginBottom: 15,
   },
-  idStatusSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 24,
-  },
-  viewIdButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 25,
-  },
-  viewIdButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  featuresContainer: {
-    marginTop: 10,
-  },
-  featuresTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2d3436',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
+  // Features Grid
   featuresGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 16,
   },
   featureCard: {
-    width: (width - 56) / 2,
-    borderRadius: 12,
+    width: (width - 55) / 2,
+    marginBottom: 15,
+    borderRadius: 20,
+    overflow: 'hidden',
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   featureCardGradient: {
-    borderRadius: 12,
     padding: 20,
-    alignItems: 'center',
     minHeight: 140,
+    justifyContent: 'space-between',
+  },
+  featureIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   featureCardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: 'white',
-    marginTop: 12,
-    marginBottom: 8,
-    textAlign: 'center',
+    marginBottom: 5,
   },
   featureCardDescription: {
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
     lineHeight: 16,
   },
-  testSection: {
-    marginTop: 20,
-    padding: 20,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    marginBottom: 20,
+  // Action Card Styles
+  actionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 15,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
-  testTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2d3436',
-    marginBottom: 16,
-    textAlign: 'center',
+  actionIconBox: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  actionContent: {
+    flex: 1,
+  },
+  actionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 3,
+  },
+  actionSubtitle: {
+    fontSize: 13,
+    color: '#999',
   },
 });

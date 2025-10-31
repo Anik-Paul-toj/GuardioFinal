@@ -18,6 +18,7 @@ import {
     View,
 } from 'react-native';
 import { auth } from '../config/firebase';
+import { saveUserToStorage } from '../services/authStorageService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -50,6 +51,15 @@ export default function AuthScreen() {
       if (isSignUp) {
         // Create new account
         userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        
+        // Save user to AsyncStorage
+        await saveUserToStorage({
+          uid: userCredential.user.uid,
+          email: userCredential.user.email,
+          name: name,
+          createdAt: new Date().toISOString(),
+        });
+        
         Alert.alert(
           'Account Created!',
           'Now let\'s create your digital tourist ID for enhanced security and seamless travel.',
@@ -58,6 +68,14 @@ export default function AuthScreen() {
       } else {
         // Sign in existing user
         userCredential = await signInWithEmailAndPassword(auth, email, password);
+        
+        // Save user to AsyncStorage
+        await saveUserToStorage({
+          uid: userCredential.user.uid,
+          email: userCredential.user.email,
+          lastLogin: new Date().toISOString(),
+        });
+        
         Alert.alert(
           'Welcome Back!',
           'Complete your digital tourist ID setup for the best experience.',
@@ -106,6 +124,14 @@ export default function AuthScreen() {
       const userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, fakePassword);
       
       console.log('Fake Google user created:', userCredential.user.uid);
+      
+      // Save user to AsyncStorage
+      await saveUserToStorage({
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        provider: 'google',
+        createdAt: new Date().toISOString(),
+      });
       
       Alert.alert(
         'Google Sign In Successful!',
