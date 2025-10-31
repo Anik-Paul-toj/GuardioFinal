@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "306632039905",
+    "firebase_url": "https://guardio-500a0-default-rtdb.firebaseio.com",
+    "project_id": "guardio-500a0",
+    "storage_bucket": "guardio-500a0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:306632039905:android:ba061babef00bf4db8c6a0",
+        "android_client_info": {
+          "package_name": "com.anonymous.guardiofinal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "306632039905-hjrrneooie7ec5vnr6ebslofqg4hjs32.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATOVSyEYz8Ywvo-INC7olc6OH8KfTRUG4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "306632039905-hjrrneooie7ec5vnr6ebslofqg4hjs32.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

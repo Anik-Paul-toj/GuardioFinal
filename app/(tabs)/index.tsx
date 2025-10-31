@@ -128,7 +128,7 @@ export default function HomeScreen() {
         <View style={styles.headerContent}>
           <Text style={styles.welcomeText}>Welcome to</Text>
           <Text style={styles.appTitle}>Guardio</Text>
-          <Text style={styles.subtitle}>Your Digital Tourist ID Platform</Text>
+          <Text style={styles.subtitle}>Your Secure Digital Identity Platform</Text>
           
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="white" />
@@ -150,9 +150,9 @@ export default function HomeScreen() {
             >
               <View style={styles.mintCardContent}>
                 <Ionicons name="shield-outline" size={48} color="white" />
-                <Text style={styles.mintCardTitle}>Mint Your Tourist ID</Text>
+                <Text style={styles.mintCardTitle}>Create Your Digital ID</Text>
                 <Text style={styles.mintCardSubtitle}>
-                  Create your secure blockchain-based digital tourist identity
+                  Verify your identity and get your secure digital tourist ID
                 </Text>
                 <View style={styles.mintButton}>
                   <Text style={styles.mintButtonText}>Get Started</Text>
@@ -169,13 +169,13 @@ export default function HomeScreen() {
             >
               <View style={styles.idStatusContent}>
                 <Ionicons name="shield-checkmark" size={48} color="white" />
-                <Text style={styles.idStatusTitle}>Tourist ID Active</Text>
+                <Text style={styles.idStatusTitle}>Digital ID Active</Text>
                 <Text style={styles.idStatusSubtitle}>
-                  Your digital identity is secured on the blockchain
+                  Your digital identity is verified and secure
                 </Text>
                 <TouchableOpacity 
                   style={styles.viewIdButton}
-                  onPress={() => router.push('/(tabs)/explore')}
+                  onPress={() => router.push('/(tabs)/my-id')}
                 >
                   <Text style={styles.viewIdButtonText}>View Details</Text>
                 </TouchableOpacity>
@@ -217,18 +217,18 @@ export default function HomeScreen() {
             
             <FeatureCard
               icon="lock-closed-outline"
-              title="Blockchain Security"
-              description="Encrypted NFT protection"
+              title="Secure Storage"
+              description="Your data is safely protected"
               color={['#fd79a8', '#e84393']}
-              onPress={() => Alert.alert('Blockchain', 'Your data is secured using blockchain technology!')}
+              onPress={() => Alert.alert('Security', 'Your data is protected with advanced encryption!')}
             />
             
             <FeatureCard
               icon="card-outline"
-              title="Digital Wallet"
-              description="Manage your tourist assets"
+              title="Digital Services"
+              description="Access tourist services easily"
               color={['#fdcb6e', '#e17055']}
-              onPress={() => Alert.alert('Coming Soon', 'Digital wallet feature will be available soon!')}
+              onPress={() => Alert.alert('Coming Soon', 'Digital services feature will be available soon!')}
             />
           </View>
         </View>

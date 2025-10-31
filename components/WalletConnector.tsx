@@ -75,8 +75,8 @@ export default function WalletConnector({
         onWalletConnected(walletData);
         
         Alert.alert(
-          'Wallet Connected! 🎉',
-          `Address: ${address.substring(0, 6)}...${address.substring(38)}\\nBalance: ${parseFloat(balance).toFixed(4)} MATIC`,
+          'Connection Successful! 🎉',
+          `Your digital wallet is now connected.\\nAddress: ${address.substring(0, 6)}...${address.substring(38)}\\nBalance: ${parseFloat(balance).toFixed(4)} MATIC`,
           [{ text: 'OK' }]
         );
       }
@@ -105,10 +105,10 @@ export default function WalletConnector({
       
       if (existingID) {
         Alert.alert(
-          'Tourist ID Found! 🎯',
-          `You already have a Tourist ID NFT:\\n\\nToken ID: ${existingID.tokenId}\\nNationality: ${existingID.data.nationality}\\nMinted: ${existingID.data.mintedAt.toLocaleDateString()}`,
+          'Digital ID Found! 🎯',
+          `You already have a verified Digital ID:\\n\\nID Number: ${existingID.tokenId}\\nNationality: ${existingID.data.nationality}\\nCreated: ${existingID.data.mintedAt.toLocaleDateString()}`,
           [
-            { text: 'View on Explorer', onPress: () => openExplorer(existingID.explorerUrl) },
+            { text: 'View Details', onPress: () => openExplorer(existingID.explorerUrl) },
             { text: 'OK' }
           ]
         );
@@ -135,9 +135,9 @@ export default function WalletConnector({
     if (balance < 0.01) {
       Alert.alert(
         'Insufficient Balance',
-        `You need at least 0.01 MATIC to mint your Tourist ID NFT. Your current balance is ${balance.toFixed(4)} MATIC.\\n\\nGet free testnet MATIC from the faucet.`,
+        `You need at least 0.01 MATIC to create your Digital ID. Your current balance is ${balance.toFixed(4)} MATIC.\\n\\nGet free testnet MATIC from the faucet.`,
         [
-          { text: 'Get Testnet MATIC', onPress: () => openExplorer(POLYGON_AMOY_CONFIG.faucet) },
+          { text: 'Get Free MATIC', onPress: () => openExplorer(POLYGON_AMOY_CONFIG.faucet) },
           { text: 'OK' }
         ]
       );
@@ -159,7 +159,7 @@ export default function WalletConnector({
         <View style={styles.modalContent}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Connect MetaMask</Text>
+            <Text style={styles.title}>Connect Wallet</Text>
             <TouchableOpacity onPress={onClose}>
               <Ionicons name="close" size={24} color="#666" />
             </TouchableOpacity>
@@ -173,28 +173,28 @@ export default function WalletConnector({
                 style={styles.walletCard}
               >
                 <Ionicons name="wallet" size={48} color="white" />
-                <Text style={styles.walletCardTitle}>Connect MetaMask</Text>
+                <Text style={styles.walletCardTitle}>Connect Your Wallet</Text>
                 <Text style={styles.walletCardDescription}>
-                  Tap below to open MetaMask directly and connect your wallet to mint your Tourist ID NFT on Polygon Amoy testnet
+                  Connect your digital wallet to create and secure your digital identity
                 </Text>
               </LinearGradient>
 
               <View style={styles.infoSection}>
                 <View style={styles.infoItem}>
                   <Ionicons name="phone-portrait" size={20} color="#e74c3c" />
-                  <Text style={styles.infoText}>Opens MetaMask directly</Text>
+                  <Text style={styles.infoText}>Opens wallet app directly</Text>
                 </View>
                 <View style={styles.infoItem}>
                   <Ionicons name="shield-checkmark" size={20} color="#2ecc71" />
-                  <Text style={styles.infoText}>Secure blockchain storage</Text>
+                  <Text style={styles.infoText}>Secure encrypted storage</Text>
                 </View>
                 <View style={styles.infoItem}>
                   <Ionicons name="globe" size={20} color="#3498db" />
-                  <Text style={styles.infoText}>Polygon Amoy testnet</Text>
+                  <Text style={styles.infoText}>Global verification network</Text>
                 </View>
                 <View style={styles.infoItem}>
                   <Ionicons name="diamond" size={20} color="#9b59b6" />
-                  <Text style={styles.infoText}>NFT-based identity</Text>
+                  <Text style={styles.infoText}>Digital identity certificate</Text>
                 </View>
               </View>
 
@@ -265,7 +265,7 @@ export default function WalletConnector({
                     color="white" 
                   />
                   <Text style={styles.mintButtonText}>
-                    {checking ? 'Checking...' : 'Mint Tourist ID NFT'}
+                    {checking ? 'Checking...' : 'Create Digital ID'}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>

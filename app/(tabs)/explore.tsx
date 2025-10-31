@@ -4,15 +4,15 @@ import { ThemedView } from '@/components/themed-view';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-export default function TabTwoScreen() {
+export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <ThemedView style={styles.header}>
         <ThemedText type="title" style={styles.title}>
-          Your Digital Tourist ID
+          Profile & Settings
         </ThemedText>
         <ThemedText style={styles.subtitle}>
-          View your saved profile information
+          Manage your account and digital identity
         </ThemedText>
       </ThemedView>
       <UserProfileView />
@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    backgroundColor: '#667eea',
+    backgroundColor: '#6c5ce7',
     alignItems: 'center',
   },
   title: {

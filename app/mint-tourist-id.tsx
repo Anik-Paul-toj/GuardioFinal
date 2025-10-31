@@ -236,11 +236,11 @@ export default function MintTouristIdScreen() {
       setMintingStep('complete');
 
       Alert.alert(
-        'Tourist ID NFT Minted! 🎉',
-        `Your digital tourist ID has been successfully minted on the blockchain!\\n\\nToken ID: ${mintResult.tokenId}\\nTransaction: ${mintResult.transactionHash.substring(0, 10)}...`,
+        'Digital ID Created! 🎉',
+        `Your digital identity has been successfully created and verified!\\n\\nID Number: ${mintResult.tokenId}\\nVerification: ${mintResult.transactionHash.substring(0, 10)}...`,
         [
           {
-            text: 'View on Explorer',
+            text: 'View Details',
             onPress: () => console.log('Opening:', mintResult.explorerUrl)
           },
           {
@@ -307,7 +307,7 @@ export default function MintTouristIdScreen() {
               >
                 <Ionicons name="information-circle" size={24} color="white" />
                 <Text style={styles.infoCardText}>
-                  Your data will be encrypted and stored securely on the blockchain as an NFT. Only you control access to your digital identity.
+                  Your information will be encrypted and stored securely. Only you control access to your digital identity.
                 </Text>
               </LinearGradient>
             </View>
@@ -446,7 +446,7 @@ export default function MintTouristIdScreen() {
                       color="white" 
                     />
                     <Text style={styles.mintButtonText}>
-                      {mintingStep === 'profile' ? 'Save Profile & Continue' : 'Mint Tourist ID NFT'}
+                      {mintingStep === 'profile' ? 'Save Profile & Continue' : 'Create Digital ID'}
                     </Text>
                   </View>
                 )}
