@@ -77,6 +77,8 @@ export default function SOSScreen() {
   const [isOnline, setIsOnline] = useState(true);
   const [roomId, setRoomId] = useState<string>('sos_room');
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const [customSignalingUrl, setCustomSignalingUrl] = useState<string>('');
+  const [useCustomUrl, setUseCustomUrl] = useState<boolean>(false);
 
   // Get default signaling URL based on platform
   const getDefaultSignalingUrl = (): string => {
@@ -125,7 +127,7 @@ export default function SOSScreen() {
 
   // Initialize WebRTC mesh
   const mesh = useMemo(() => {
-    const signalingUrl = getDefaultSignalingUrl();
+    const signalingUrl = useCustomUrl && customSignalingUrl ? customSignalingUrl : getDefaultSignalingUrl();
     console.log(`Initializing WebRTC mesh with signaling URL: ${signalingUrl}`);
     
     const meshInstance = new WebRTCMesh({
@@ -147,7 +149,7 @@ export default function SOSScreen() {
     });
     
     return meshInstance;
-  }, [roomId]);
+  }, [roomId, useCustomUrl, customSignalingUrl]);
 
   const getLocationPermission = async () => {
     try {
@@ -477,6 +479,79 @@ export default function SOSScreen() {
                'Disconnected'}
             </Text>
           </View>
+
+          {/* Signaling URL Configuration (for localhost testing) */}
+          {__DEV__ && (
+            <View style={styles.roomConfigContainer}>
+              <View style={styles.toggleContainer}>
+                <Text style={styles.configLabel}>Custom Signaling URL (Localhost Testing)</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (connectionStatus === 'disconnected') {
+                      setUseCustomUrl(!useCustomUrl);
+                    }
+                  }}
+                  disabled={connectionStatus !== 'disconnected'}
+                >
+                  <Ionicons
+                    name={useCustomUrl ? 'toggle' : 'toggle-outline'}
+                    size={24}
+                    color={useCustomUrl ? '#27ae60' : '#95a5a6'}
+                  />
+                </TouchableOpacity>
+              </View>
+              
+              {useCustomUrl && (
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.roomIdInput}
+                    value={customSignalingUrl}
+                    onChangeText={setCustomSignalingUrl}
+                    placeholder="ws://localhost:8080 or ws://192.168.1.100:8080"
+                    placeholderTextColor="#999"
+                    editable={connectionStatus === 'disconnected'}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <Text style={styles.configHint}>
+                    Enter custom signaling server URL for localhost testing{'\n'}
+                    Examples: ws://localhost:8080 (web), ws://10.0.2.2:8080 (emulator), ws://YOUR_IP:8080 (device)
+                  </Text>
+                  
+                  {/* Quick preset buttons */}
+                  <View style={styles.quickButtons}>
+                    <TouchableOpacity
+                      style={styles.quickButton}
+                      onPress={() => setCustomSignalingUrl('ws://localhost:8080')}
+                      disabled={connectionStatus !== 'disconnected'}
+                    >
+                      <Text style={styles.quickButtonText}>localhost</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.quickButton}
+                      onPress={() => setCustomSignalingUrl('ws://10.0.2.2:8080')}
+                      disabled={connectionStatus !== 'disconnected'}
+                    >
+                      <Text style={styles.quickButtonText}>Emulator</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.quickButton}
+                      onPress={() => setCustomSignalingUrl(getDefaultSignalingUrl())}
+                      disabled={connectionStatus !== 'disconnected'}
+                    >
+                      <Text style={styles.quickButtonText}>Auto</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+              
+              {!useCustomUrl && (
+                <Text style={styles.configHint}>
+                  Current: {getDefaultSignalingUrl()}
+                </Text>
+              )}
+            </View>
+          )}
 
           {/* Room ID Configuration (for advanced users) */}
           <View style={styles.roomConfigContainer}>
@@ -888,5 +963,30 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.6,
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  quickButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  quickButton: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 6,
+    padding: 8,
+    alignItems: 'center',
+  },
+  quickButtonText: {
+    fontSize: 12,
+    color: '#2d3436',
+    fontWeight: '500',
   },
 });

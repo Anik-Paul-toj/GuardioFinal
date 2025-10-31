@@ -4,17 +4,19 @@ import { useRouter } from 'expo-router';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    Image,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 import { auth } from '../../config/firebase';
+import directWalletService, { POLYGON_AMOY_CONFIG } from '../../services/directWalletService';
 import { getUserProfile } from '../../services/userService';
 
 const { width } = Dimensions.get('window');
@@ -39,6 +41,9 @@ export default function MyIDScreen() {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState<string>('0');
+  const [showQRCode, setShowQRCode] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -58,6 +63,21 @@ export default function MyIDScreen() {
     try {
       const profile = await getUserProfile(userId) as UserProfile | null;
       setUserProfile(profile);
+      
+      // Check if wallet is connected and get wallet info
+      try {
+        await directWalletService.initialize();
+        if (directWalletService.isWalletConnected()) {
+          const address = directWalletService.getWalletAddress();
+          const balance = await directWalletService.getBalance();
+          if (address) {
+            setWalletAddress(address);
+            setWalletBalance(balance);
+          }
+        }
+      } catch (error) {
+        console.log('Wallet not connected or error loading wallet info');
+      }
     } catch (error) {
       console.error('Error loading user profile:', error);
     }
@@ -178,6 +198,88 @@ export default function MyIDScreen() {
           </View>
         )}
 
+        {/* Wallet QR Code Card (PhonePe/GPay Style) */}
+        {walletAddress && showQRCode && (
+          <View style={styles.qrCodeSection}>
+            <Text style={styles.sectionTitle}>QR Code</Text>
+            <View style={styles.qrCodeCard}>
+              <LinearGradient
+                colors={['#ffffff', '#f8f9fa']}
+                style={styles.qrCodeGradient}
+              >
+                {/* Header */}
+                <View style={styles.qrHeader}>
+                  <View style={styles.qrHeaderLeft}>
+                    <Ionicons name="wallet" size={24} color="#667eea" />
+                    <View style={styles.qrHeaderText}>
+                      <Text style={styles.qrTitle}>QR</Text>
+                      <Text style={styles.qrSubtitle}>
+                        {walletAddress.substring(0, 8)}...{walletAddress.substring(36)}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.balanceBadge}>
+                    <Text style={styles.balanceText}>
+                      {parseFloat(walletBalance).toFixed(4)} MATIC
+                    </Text>
+                  </View>
+                </View>
+
+                {/* QR Code */}
+                <View style={styles.qrCodeWrapper}>
+                  <View style={styles.qrCodeInner}>
+                    <QRCode
+                      value={JSON.stringify({
+                        address: walletAddress,
+                        balance: parseFloat(walletBalance).toFixed(4),
+                        network: 'Polygon Amoy',
+                        chainId: POLYGON_AMOY_CONFIG.chainId,
+                        name: userProfile?.fullName || 'User',
+                        tokenId: userProfile?.blockchainData?.tokenId || null,
+                        type: 'digital-id-wallet'
+                      })}
+                      size={240}
+                      color="#000000"
+                      backgroundColor="#FFFFFF"
+                      ecl="H"
+                      logoMargin={2}
+                      logoSize={0}
+                    />
+                  </View>
+                  <Text style={styles.scanHint}>Scan with any QR code reader</Text>
+                </View>
+
+                {/* Info Section */}
+                <View style={styles.qrInfoSection}>
+                  <View style={styles.qrInfoRow}>
+                    <Ionicons name="person-outline" size={16} color="#636e72" />
+                    <Text style={styles.qrInfoText}>
+                      {userProfile?.fullName || 'User Name'}
+                    </Text>
+                  </View>
+                  {userProfile?.blockchainData?.tokenId && (
+                    <View style={styles.qrInfoRow}>
+                      <Ionicons name="diamond-outline" size={16} color="#636e72" />
+                      <Text style={styles.qrInfoText}>
+                        ID: #{userProfile.blockchainData.tokenId}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={styles.qrInfoRow}>
+                    <Ionicons name="earth-outline" size={16} color="#636e72" />
+                    <Text style={styles.qrInfoText}>Polygon Amoy Network</Text>
+                  </View>
+                </View>
+
+                {/* Footer Hint */}
+                <Text style={styles.qrHint}>
+                  Scan to view wallet details and verify identity
+                </Text>
+              </LinearGradient>
+            </View>
+          </View>
+        )}
+
         {/* ID Features */}
         <View style={styles.featuresSection}>
           <Text style={styles.sectionTitle}>ID Features</Text>
@@ -237,10 +339,15 @@ export default function MyIDScreen() {
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => setShowQRCode(!showQRCode)}
+            >
               <LinearGradient colors={['#3498db', '#2980b9']} style={styles.actionButtonGradient}>
-                <Ionicons name="share-outline" size={24} color="white" />
-                <Text style={styles.actionButtonText}>Share ID (QR Code)</Text>
+                <Ionicons name={showQRCode ? "qr-code" : "qr-code-outline"} size={24} color="white" />
+                <Text style={styles.actionButtonText}>
+                  {showQRCode ? 'Hide QR Code' : 'Show QR Code'}
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
 
@@ -488,5 +595,110 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  qrCodeSection: {
+    padding: 20,
+  },
+  qrCodeCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+  },
+  qrCodeGradient: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  qrHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 20,
+  },
+  qrHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  qrHeaderText: {
+    flex: 1,
+  },
+  qrTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2d3436',
+    marginBottom: 4,
+  },
+  qrSubtitle: {
+    fontSize: 12,
+    color: '#636e72',
+    fontFamily: 'monospace',
+  },
+  balanceBadge: {
+    backgroundColor: '#e8f5e9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#4caf50',
+  },
+  balanceText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#2e7d32',
+  },
+  qrCodeWrapper: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 16,
+    marginVertical: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  qrCodeInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+  },
+  scanHint: {
+    fontSize: 11,
+    color: '#95a5a6',
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  qrInfoSection: {
+    width: '100%',
+    backgroundColor: '#f8f9fa',
+    padding: 16,
+    borderRadius: 12,
+    gap: 12,
+    marginBottom: 16,
+  },
+  qrInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  qrInfoText: {
+    fontSize: 14,
+    color: '#2d3436',
+    fontWeight: '500',
+  },
+  qrHint: {
+    fontSize: 12,
+    color: '#95a5a6',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });

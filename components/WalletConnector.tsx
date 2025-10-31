@@ -10,6 +10,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 import directWalletService, { POLYGON_AMOY_CONFIG } from '../services/directWalletService';
 
 const { width } = Dimensions.get('window');
@@ -231,21 +232,43 @@ export default function WalletConnector({
                 </LinearGradient>
 
                 <View style={styles.walletDetails}>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Address:</Text>
-                    <Text style={styles.detailValue}>
-                      {walletInfo.address.substring(0, 6)}...{walletInfo.address.substring(38)}
-                    </Text>
+                  {/* QR Code Display */}
+                  <View style={styles.qrCodeContainer}>
+                    <QRCode
+                      value={JSON.stringify({
+                        address: walletInfo.address,
+                        balance: parseFloat(walletInfo.balance).toFixed(4),
+                        network: 'Polygon Amoy',
+                        chainId: POLYGON_AMOY_CONFIG.chainId,
+                        type: 'wallet'
+                      })}
+                      size={220}
+                      color="#000000"
+                      backgroundColor="#FFFFFF"
+                      ecl="H"
+                      logoMargin={2}
+                      logoSize={0}
+                    />
                   </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Balance:</Text>
-                    <Text style={styles.detailValue}>
-                      {parseFloat(walletInfo.balance).toFixed(4)} MATIC
-                    </Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Network:</Text>
-                    <Text style={styles.detailValue}>Polygon Amoy</Text>
+                  
+                  {/* Wallet Info Below QR */}
+                  <View style={styles.walletInfoCompact}>
+                    <View style={styles.infoRow}>
+                      <Ionicons name="wallet-outline" size={16} color="#636e72" />
+                      <Text style={styles.compactValue}>
+                        {walletInfo.address.substring(0, 8)}...{walletInfo.address.substring(36)}
+                      </Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Ionicons name="cash-outline" size={16} color="#636e72" />
+                      <Text style={styles.compactValue}>
+                        {parseFloat(walletInfo.balance).toFixed(4)} MATIC
+                      </Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Ionicons name="earth-outline" size={16} color="#636e72" />
+                      <Text style={styles.compactValue}>Polygon Amoy</Text>
+                    </View>
                   </View>
                 </View>
               </View>
@@ -391,22 +414,36 @@ const styles = StyleSheet.create({
   },
   walletDetails: {
     backgroundColor: '#f8f9fa',
-    padding: 16,
+    padding: 20,
+    alignItems: 'center',
   },
-  detailRow: {
+  qrCodeContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  walletInfoCompact: {
+    width: '100%',
+    gap: 8,
+  },
+  infoRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
-  detailLabel: {
-    fontSize: 14,
-    color: '#636e72',
-    fontWeight: '500',
-  },
-  detailValue: {
-    fontSize: 14,
+  compactValue: {
+    fontSize: 13,
     color: '#2d3436',
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontFamily: 'monospace',
   },
   mintButton: {
