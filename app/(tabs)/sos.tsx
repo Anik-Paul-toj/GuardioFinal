@@ -406,30 +406,7 @@ export default function SOSScreen() {
           </View>
         </View>
 
-        {/* Emergency Contacts */}
-        <View style={styles.contactsSection}>
-          <Text style={styles.sectionTitle}>Emergency Contacts</Text>
-          <View style={styles.contactsGrid}>
-            {emergencyContacts.map((contact, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.contactCard}
-                onPress={() => callEmergency(contact)}
-              >
-                <LinearGradient 
-                  colors={contact.color as [string, string]} 
-                  style={styles.contactCardGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Ionicons name={contact.icon as any} size={32} color="white" />
-                  <Text style={styles.contactName}>{contact.name}</Text>
-                  <Text style={styles.contactNumber}>{contact.number}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+
 
         {/* Connection Controls */}
         <View style={styles.configSection}>
@@ -659,6 +636,31 @@ export default function SOSScreen() {
               <Text style={styles.actionButtonText}>Medical Information</Text>
             </LinearGradient>
           </TouchableOpacity>
+        </View>
+
+        {/* Emergency Contacts */}
+        <View style={styles.contactsSection}>
+          <Text style={styles.sectionTitle}>Emergency Contacts</Text>
+          <View style={styles.contactsGrid}>
+            {emergencyContacts.map((contact, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.contactCard}
+                onPress={() => callEmergency(contact)}
+              >
+                <LinearGradient 
+                  colors={contact.color as [string, string]} 
+                  style={styles.contactCardGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Ionicons name={contact.icon as any} size={32} color="white" />
+                  <Text style={styles.contactName}>{contact.name}</Text>
+                  <Text style={styles.contactNumber}>{contact.number}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
