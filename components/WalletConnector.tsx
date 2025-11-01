@@ -2,15 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
 import directWalletService, { POLYGON_AMOY_CONFIG } from '../services/directWalletService';
 
 const { width } = Dimensions.get('window');
@@ -76,22 +75,22 @@ export default function WalletConnector({
         onWalletConnected(walletData);
         
         Alert.alert(
-          'Connection Successful! 🎉',
-          `Your digital wallet is now connected.\\nAddress: ${address.substring(0, 6)}...${address.substring(38)}\\nBalance: ${parseFloat(balance).toFixed(4)} MATIC`,
+          'Verification Successful! 🎉',
+          `Your identity has been verified and secured.\\nAccount: ${address.substring(0, 6)}...${address.substring(38)}`,
           [{ text: 'OK' }]
         );
       }
       
     } catch (error: any) {
-      console.error('Wallet connection error:', error);
+      console.error('Verification error:', error);
       
-      let errorMessage = 'Failed to connect wallet. Please try again.';
+      let errorMessage = 'Failed to verify identity. Please try again.';
       
       if (error.message.includes('User rejected')) {
-        errorMessage = 'Connection request was rejected. Please try again.';
+        errorMessage = 'Verification request was cancelled. Please try again.';
       }
       
-      Alert.alert('Connection Failed', errorMessage);
+      Alert.alert('Verification Failed', errorMessage);
     } finally {
       setConnecting(false);
     }
@@ -128,17 +127,17 @@ export default function WalletConnector({
 
   const handleMintTouristID = () => {
     if (!walletInfo) {
-      Alert.alert('Error', 'Please connect your wallet first');
+      Alert.alert('Error', 'Please complete verification first');
       return;
     }
 
     const balance = parseFloat(walletInfo.balance);
     if (balance < 0.01) {
       Alert.alert(
-        'Insufficient Balance',
-        `You need at least 0.01 MATIC to create your Digital ID. Your current balance is ${balance.toFixed(4)} MATIC.\\n\\nGet free testnet MATIC from the faucet.`,
+        'Insufficient Funds',
+        `A small network fee (0.01 MATIC) is required for verification. Your current balance is ${balance.toFixed(4)} MATIC.\\n\\nGet free testnet MATIC from the faucet.`,
         [
-          { text: 'Get Free MATIC', onPress: () => openExplorer(POLYGON_AMOY_CONFIG.faucet) },
+          { text: 'Get Test Funds', onPress: () => openExplorer(POLYGON_AMOY_CONFIG.faucet) },
           { text: 'OK' }
         ]
       );
@@ -160,42 +159,55 @@ export default function WalletConnector({
         <View style={styles.modalContent}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Connect Wallet</Text>
+            <Text style={styles.title}>Verify Identity</Text>
             <TouchableOpacity onPress={onClose}>
               <Ionicons name="close" size={24} color="#666" />
             </TouchableOpacity>
           </View>
 
           {!walletInfo ? (
-            /* Wallet Connection */
+            /* Identity Verification */
             <View style={styles.content}>
               <LinearGradient
-                colors={['#667eea', '#764ba2']}
-                style={styles.walletCard}
+                colors={['#7C3AED', '#9333EA']}
+                style={styles.verifyCard}
               >
-                <Ionicons name="wallet" size={48} color="white" />
-                <Text style={styles.walletCardTitle}>Connect Your Wallet</Text>
-                <Text style={styles.walletCardDescription}>
-                  Connect your digital wallet to create and secure your digital identity
+                <View style={styles.iconContainer}>
+                  <Ionicons name="shield-checkmark-outline" size={54} color="white" />
+                </View>
+                <Text style={styles.verifyCardTitle}>Secure Identity Verification</Text>
+                <Text style={styles.verifyCardDescription}>
+                  Complete the verification process to create your digital identity
                 </Text>
               </LinearGradient>
 
               <View style={styles.infoSection}>
-                <View style={styles.infoItem}>
-                  <Ionicons name="phone-portrait" size={20} color="#e74c3c" />
-                  <Text style={styles.infoText}>Opens wallet app directly</Text>
+                <View style={styles.featureItem}>
+                  <View style={styles.featureIcon}>
+                    <Ionicons name="lock-closed" size={22} color="#7C3AED" />
+                  </View>
+                  <View style={styles.featureContent}>
+                    <Text style={styles.featureTitle}>Encrypted & Secure</Text>
+                    <Text style={styles.featureDescription}>Your data is protected with encryption</Text>
+                  </View>
                 </View>
-                <View style={styles.infoItem}>
-                  <Ionicons name="shield-checkmark" size={20} color="#2ecc71" />
-                  <Text style={styles.infoText}>Secure encrypted storage</Text>
+                <View style={styles.featureItem}>
+                  <View style={styles.featureIcon}>
+                    <Ionicons name="checkmark-circle" size={22} color="#10B981" />
+                  </View>
+                  <View style={styles.featureContent}>
+                    <Text style={styles.featureTitle}>Verified Identity</Text>
+                    <Text style={styles.featureDescription}>Globally recognized verification</Text>
+                  </View>
                 </View>
-                <View style={styles.infoItem}>
-                  <Ionicons name="globe" size={20} color="#3498db" />
-                  <Text style={styles.infoText}>Global verification network</Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Ionicons name="diamond" size={20} color="#9b59b6" />
-                  <Text style={styles.infoText}>Digital identity certificate</Text>
+                <View style={styles.featureItem}>
+                  <View style={styles.featureIcon}>
+                    <Ionicons name="card-outline" size={22} color="#3B82F6" />
+                  </View>
+                  <View style={styles.featureContent}>
+                    <Text style={styles.featureTitle}>Digital Certificate</Text>
+                    <Text style={styles.featureDescription}>Receive your unique digital ID</Text>
+                  </View>
                 </View>
               </View>
 
@@ -205,69 +217,67 @@ export default function WalletConnector({
                 disabled={connecting}
               >
                 <LinearGradient
-                  colors={connecting ? ['#bdc3c7', '#95a5a6'] : ['#3498db', '#2980b9']}
+                  colors={connecting ? ['#9CA3AF', '#6B7280'] : ['#7C3AED', '#9333EA']}
                   style={styles.connectButtonGradient}
                 >
                   <Ionicons 
-                    name={connecting ? "hourglass" : "wallet"} 
-                    size={20} 
+                    name={connecting ? "hourglass-outline" : "arrow-forward-circle-outline"} 
+                    size={22} 
                     color="white" 
                   />
                   <Text style={styles.connectButtonText}>
-                    {connecting ? 'Opening MetaMask...' : 'Open MetaMask'}
+                    {connecting ? 'Verifying...' : 'Start Verification'}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
+
+              <Text style={styles.secureNote}>
+                <Ionicons name="information-circle-outline" size={14} color="#7C8BA0" /> This process is secure and your data remains private
+              </Text>
             </View>
           ) : (
-            /* Wallet Connected */
+            /* Identity Verified */
             <View style={styles.content}>
               <View style={styles.connectedCard}>
                 <LinearGradient
-                  colors={['#2ecc71', '#27ae60']}
+                  colors={['#10B981', '#059669']}
                   style={styles.connectedHeader}
                 >
-                  <Ionicons name="checkmark-circle" size={32} color="white" />
-                  <Text style={styles.connectedTitle}>Wallet Connected</Text>
+                  <Ionicons name="checkmark-circle" size={36} color="white" />
+                  <Text style={styles.connectedTitle}>Identity Verified</Text>
+                  <Text style={styles.connectedSubtitle}>Ready to create your Digital ID</Text>
                 </LinearGradient>
 
-                <View style={styles.walletDetails}>
-                  {/* QR Code Display */}
-                  <View style={styles.qrCodeContainer}>
-                    <QRCode
-                      value={JSON.stringify({
-                        address: walletInfo.address,
-                        balance: parseFloat(walletInfo.balance).toFixed(4),
-                        network: 'Polygon Amoy',
-                        chainId: POLYGON_AMOY_CONFIG.chainId,
-                        type: 'wallet'
-                      })}
-                      size={220}
-                      color="#000000"
-                      backgroundColor="#FFFFFF"
-                      ecl="H"
-                      logoMargin={2}
-                      logoSize={0}
-                    />
+                <View style={styles.verifiedDetails}>
+                  <View style={styles.verifiedItem}>
+                    <View style={styles.verifiedIconBg}>
+                      <Ionicons name="shield-checkmark" size={20} color="#7C3AED" />
+                    </View>
+                    <View style={styles.verifiedInfo}>
+                      <Text style={styles.verifiedLabel}>Status</Text>
+                      <Text style={styles.verifiedValue}>Verified & Secure</Text>
+                    </View>
                   </View>
-                  
-                  {/* Wallet Info Below QR */}
-                  <View style={styles.walletInfoCompact}>
-                    <View style={styles.infoRow}>
-                      <Ionicons name="wallet-outline" size={16} color="#636e72" />
-                      <Text style={styles.compactValue}>
+
+                  <View style={styles.verifiedItem}>
+                    <View style={styles.verifiedIconBg}>
+                      <Ionicons name="key" size={20} color="#3B82F6" />
+                    </View>
+                    <View style={styles.verifiedInfo}>
+                      <Text style={styles.verifiedLabel}>Account</Text>
+                      <Text style={styles.verifiedValue}>
                         {walletInfo.address.substring(0, 8)}...{walletInfo.address.substring(36)}
                       </Text>
                     </View>
-                    <View style={styles.infoRow}>
-                      <Ionicons name="cash-outline" size={16} color="#636e72" />
-                      <Text style={styles.compactValue}>
-                        {parseFloat(walletInfo.balance).toFixed(4)} MATIC
-                      </Text>
+                  </View>
+
+                  <View style={styles.verifiedItem}>
+                    <View style={styles.verifiedIconBg}>
+                      <Ionicons name="globe" size={20} color="#10B981" />
                     </View>
-                    <View style={styles.infoRow}>
-                      <Ionicons name="earth-outline" size={16} color="#636e72" />
-                      <Text style={styles.compactValue}>Polygon Amoy</Text>
+                    <View style={styles.verifiedInfo}>
+                      <Text style={styles.verifiedLabel}>Network</Text>
+                      <Text style={styles.verifiedValue}>Polygon Amoy</Text>
                     </View>
                   </View>
                 </View>
@@ -279,22 +289,22 @@ export default function WalletConnector({
                 disabled={checking}
               >
                 <LinearGradient
-                  colors={checking ? ['#bdc3c7', '#95a5a6'] : ['#e74c3c', '#c0392b']}
+                  colors={checking ? ['#9CA3AF', '#6B7280'] : ['#7C3AED', '#9333EA']}
                   style={styles.mintButtonGradient}
                 >
                   <Ionicons 
-                    name={checking ? "hourglass" : "diamond"} 
-                    size={20} 
+                    name={checking ? "hourglass-outline" : "card-outline"} 
+                    size={22} 
                     color="white" 
                   />
                   <Text style={styles.mintButtonText}>
-                    {checking ? 'Checking...' : 'Create Digital ID'}
+                    {checking ? 'Processing...' : 'Create Digital ID'}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
 
               <Text style={styles.disclaimer}>
-                Make sure you have at least 0.01 MATIC for gas fees
+                <Ionicons name="information-circle-outline" size={14} color="#7C8BA0" /> A small network fee is required for verification
               </Text>
             </View>
           )}
@@ -307,15 +317,15 @@ export default function WalletConnector({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
     backgroundColor: 'white',
-    borderRadius: 20,
+    borderRadius: 24,
     width: width * 0.9,
-    maxHeight: '80%',
+    maxHeight: '85%',
     elevation: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
@@ -328,150 +338,198 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#F3F4F6',
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#2d3436',
+    color: '#1A1A2E',
   },
   content: {
-    padding: 20,
-  },
-  walletCard: {
     padding: 24,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginBottom: 24,
   },
-  walletCardTitle: {
-    fontSize: 18,
+  // Verify Card
+  verifyCard: {
+    padding: 28,
+    borderRadius: 20,
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  iconContainer: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  verifyCardTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
-    marginTop: 12,
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  walletCardDescription: {
+  verifyCardDescription: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.95)',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
   },
+  // Info Section
   infoSection: {
-    marginBottom: 24,
+    marginBottom: 28,
+    gap: 16,
   },
-  infoItem: {
+  featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    gap: 12,
+    backgroundColor: '#F9FAFB',
+    padding: 14,
+    borderRadius: 14,
+    gap: 14,
   },
-  infoText: {
-    fontSize: 14,
-    color: '#636e72',
+  featureIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  featureContent: {
+    flex: 1,
+  },
+  featureTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#1A1A2E',
+    marginBottom: 3,
+  },
+  featureDescription: {
+    fontSize: 13,
+    color: '#7C8BA0',
+    lineHeight: 18,
+  },
+  // Buttons
   connectButton: {
-    borderRadius: 12,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 16,
+    elevation: 6,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   connectButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
-    gap: 8,
+    padding: 18,
+    borderRadius: 16,
+    gap: 10,
   },
   connectButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
   },
+  secureNote: {
+    fontSize: 13,
+    color: '#7C8BA0',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  // Connected State
   connectedCard: {
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
     marginBottom: 24,
+    backgroundColor: 'white',
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 8,
   },
   connectedHeader: {
-    flexDirection: 'row',
+    padding: 24,
     alignItems: 'center',
-    padding: 16,
-    gap: 12,
+    gap: 8,
   },
   connectedTitle: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
-  walletDetails: {
-    backgroundColor: '#f8f9fa',
+  connectedSubtitle: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  verifiedDetails: {
     padding: 20,
-    alignItems: 'center',
+    gap: 14,
   },
-  qrCodeContainer: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  walletInfoCompact: {
-    width: '100%',
-    gap: 8,
-  },
-  infoRow: {
+  verifiedItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    padding: 14,
+    borderRadius: 14,
+    gap: 12,
+  },
+  verifiedIconBg: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'white',
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
   },
-  compactValue: {
-    fontSize: 13,
-    color: '#2d3436',
+  verifiedInfo: {
+    flex: 1,
+  },
+  verifiedLabel: {
+    fontSize: 12,
+    color: '#7C8BA0',
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  verifiedValue: {
+    fontSize: 15,
+    color: '#1A1A2E',
     fontWeight: '600',
-    fontFamily: 'monospace',
   },
+  // Mint Button
   mintButton: {
-    borderRadius: 12,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    borderRadius: 16,
+    overflow: 'hidden',
     marginBottom: 16,
+    elevation: 6,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   mintButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
-    gap: 8,
+    padding: 18,
+    borderRadius: 16,
+    gap: 10,
   },
   mintButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
   },
   disclaimer: {
-    fontSize: 12,
-    color: '#636e72',
+    fontSize: 13,
+    color: '#7C8BA0',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 20,
   },
 });
