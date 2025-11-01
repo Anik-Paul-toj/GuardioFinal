@@ -80,7 +80,6 @@ export default function AuthScreen() {
           'Welcome Back!',
           'Complete your profile setup for the best experience.',
           [
-            { text: 'Skip for now', onPress: () => router.replace('/(tabs)') },
             { text: 'Complete Profile', onPress: () => router.push('/personal-id') }
           ]
         );
@@ -261,25 +260,9 @@ export default function AuthScreen() {
                 )}
               </TouchableOpacity>
 
-              {/* Divider */}
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              {/* Google Sign In */}
-              <TouchableOpacity
-                style={[styles.googleButton, loading && styles.authButtonDisabled]}
-                onPress={handleGoogleLogin}
-                disabled={loading}
-              >
-                <Ionicons name="logo-google" size={20} color="#EA4335" />
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
-              </TouchableOpacity>
-
               {/* Toggle Sign Up/In */}
               <View style={styles.toggleContainer}>
+
                 <Text style={styles.toggleText}>
                   {isSignUp ? 'Already have an account?' : "Don't have an account?"}
                 </Text>
