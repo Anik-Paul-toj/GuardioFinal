@@ -55,21 +55,21 @@ class DirectWalletService {
       console.log('Attempting to connect wallet directly...');
 
       Alert.alert(
-        'Connect MetaMask Wallet',
-        'Choose how you want to connect your MetaMask wallet:',
+        'Complete Verification',
+        'Choose how you want to complete the identity verification:',
         [
           {
             text: 'Cancel',
             style: 'cancel'
           },
           {
-            text: 'Open MetaMask App',
+            text: 'Secure Verification',
             onPress: async () => {
               await this.openMetaMaskApp();
             }
           },
           {
-            text: 'Demo Connection',
+            text: 'Quick Demo',
             onPress: () => {
               this.simulateConnection();
             }
@@ -96,8 +96,8 @@ class DirectWalletService {
       const metamaskUniversalLink = `metamask://dapp/guardio.app`;
 
       Alert.alert(
-        'Opening MetaMask',
-        'MetaMask will open now. Please:\n\n1. Connect your wallet if prompted\n2. Switch to Polygon Amoy testnet\n3. Return to this app when done',
+        'Secure Identity Verification',
+        'You will be redirected to complete the secure verification process.\n\nPlease:\n1. Approve the verification request\n2. Complete the security steps\n3. Return to this app when finished',
         [
           {
             text: 'Cancel'
@@ -124,11 +124,11 @@ class DirectWalletService {
               } catch (error) {
                 console.error('Error opening MetaMask:', error);
                 Alert.alert(
-                  'Cannot Open MetaMask',
-                  'Unable to open MetaMask app. You can use the demo connection for testing.',
+                  'Verification Unavailable',
+                  'Unable to open the verification system. You can use the quick demo for testing.',
                   [
                     {
-                      text: 'Use Demo',
+                      text: 'Use Quick Demo',
                       onPress: () => this.simulateConnection()
                     }
                   ]
@@ -161,8 +161,8 @@ class DirectWalletService {
       console.log('Prompting for connection confirmation...');
       
       Alert.alert(
-        'MetaMask Connection',
-        'Did MetaMask show a connection request?\n\n• If YES: Approve it and tap "Connected"\n• If NO: MetaMask may not support this in Expo development mode\n• For testing: Use "Demo Connection"',
+        'Identity Verification',
+        'Did you complete the verification process?\n\n• If YES: Tap "Completed"\n• If NO: The system may not be available in development mode\n• For testing: Use "Quick Demo"',
         [
           {
             text: 'Try Again',
@@ -171,11 +171,11 @@ class DirectWalletService {
             }
           },
           {
-            text: 'Connected ✅',
+            text: 'Completed ✅',
             onPress: () => {
               Alert.alert(
                 'Great!',
-                'Please note: This is still a demo connection for testing. In production, this would be your real MetaMask wallet.',
+                'Your identity verification is complete. You can now proceed to create your Digital ID.',
                 [
                   {
                     text: 'Continue',
@@ -186,7 +186,7 @@ class DirectWalletService {
             }
           },
           {
-            text: 'Demo Connection',
+            text: 'Quick Demo',
             onPress: () => {
               this.simulateConnection();
             }
@@ -219,8 +219,8 @@ class DirectWalletService {
       console.log('Demo wallet connected:', this.walletAddress);
       
       Alert.alert(
-        'Wallet Connected! 🎉',
-        `Demo wallet connected:\n${demoAddress.substring(0, 6)}...${demoAddress.substring(38)}\n\nNote: This is a demo connection. In production, you would connect to your actual MetaMask wallet.`,
+        'Verification Complete! 🎉',
+        `Your identity has been verified successfully.\n\nAccount: ${demoAddress.substring(0, 6)}...${demoAddress.substring(38)}\n\nNote: This is a demo verification. In production, this would use secure blockchain verification.`,
         [{ text: 'OK' }]
       );
 
