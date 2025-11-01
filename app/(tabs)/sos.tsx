@@ -1,10 +1,11 @@
-import { auth, db } from '@/config/firebase';
+import { auth, db, rtdb } from '@/config/firebase';
 import { WebRTCMesh, isWebRTCAvailable, sosStorage } from '@/lib/webrtc';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { ref, onValue, off } from 'firebase/database';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -234,6 +235,75 @@ export default function SOSScreen() {
     getLocationPermission();
     // Don't auto-connect - let user control it
   }, []);
+
+  // Listen for SOS alerts from Arduino ESP8266 devices (Firebase Realtime Database)
+  useEffect(() => {
+    if (!auth.currentUser) return;
+
+    // Listen to all devices SOS path
+    const devicesRef = ref(rtdb, 'devices');
+    
+    // Track seen SOS messages to avoid duplicates
+    const seenSOS = new Set<string>();
+    
+    // Listen for new SOS messages from any device
+    const unsubscribe = onValue(devicesRef, (snapshot) => {
+      try {
+        const devices = snapshot.val();
+        if (!devices) return;
+
+        // Process SOS messages from all devices
+        Object.keys(devices).forEach((deviceID) => {
+          const device = devices[deviceID];
+          if (device.SOS && device.SOS.timestamp) {
+            const sosKey = `${deviceID}_${device.SOS.timestamp}`;
+            
+            // Skip if we've already seen this SOS
+            if (seenSOS.has(sosKey)) {
+              return;
+            }
+            seenSOS.add(sosKey);
+            
+            // Keep seen set size manageable (last 1000)
+            if (seenSOS.size > 1000) {
+              const firstKey = seenSOS.values().next().value;
+              seenSOS.delete(firstKey);
+            }
+
+            // Check if this is a new SOS message
+            const sosAlert: SOSAlert = {
+              userId: deviceID,
+              location: device.SOS.latitude && device.SOS.longitude 
+                ? { lat: parseFloat(device.SOS.latitude), lng: parseFloat(device.SOS.longitude) }
+                : null,
+              time: parseInt(device.SOS.timestamp) || Date.now(),
+            };
+
+            // Add to incoming alerts
+            setIncomingAlerts((prev) => {
+              const exists = prev.some(
+                (alert) => alert.userId === sosAlert.userId && 
+                          Math.abs(alert.time - sosAlert.time) < 1000
+              );
+              if (!exists) {
+                return [sosAlert, ...prev].slice(0, 50); // Keep latest 50
+              }
+              return prev;
+            });
+
+            // Also save to offline storage for persistence
+            sosStorage.addPending(sosAlert).catch(() => {});
+          }
+        });
+      } catch (error) {
+        console.error('Error processing Realtime Database SOS:', error);
+      }
+    });
+
+    return () => {
+      off(devicesRef);
+    };
+  }, [auth.currentUser]);
 
   const handleConnect = () => {
     if (!mesh) return;
