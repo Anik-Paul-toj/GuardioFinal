@@ -5,8 +5,10 @@ import React, { useEffect, useState } from 'react';
 import {
     Alert,
     Dimensions,
+    Platform,
     SafeAreaView,
     ScrollView,
+    StatusBar,
     StyleSheet,
     Switch,
     Text,
@@ -42,24 +44,6 @@ const mockIoTDevices: IoTDevice[] = [
     battery: 85,
     lastSeen: '2 mins ago',
     icon: 'card'
-  },
-  {
-    id: '002',
-    name: 'Emergency Beacon',
-    type: 'beacon',
-    status: 'online',
-    battery: 92,
-    lastSeen: '1 min ago',
-    icon: 'radio'
-  },
-  {
-    id: '003',
-    name: 'Health Monitor',
-    type: 'sensor',
-    status: 'warning',
-    battery: 23,
-    lastSeen: '5 mins ago',
-    icon: 'fitness'
   }
 ];
 
@@ -156,10 +140,14 @@ export default function TrackingScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
+        {/* Modern Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Location & Tracking</Text>
-          <Text style={styles.subtitle}>Monitor your location and connected devices</Text>
+          <View style={styles.headerTop}>
+            <View>
+              <Text style={styles.greeting}>Location & Tracking</Text>
+              <Text style={styles.subtitle}>Monitor your location and connected devices</Text>
+            </View>
+          </View>
         </View>
 
         {/* Current Location */}
@@ -316,17 +304,26 @@ export default function TrackingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F5F7FA',
   },
   scrollContent: {
     paddingBottom: 100,
   },
   header: {
     padding: 20,
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 60,
+    backgroundColor: '#F5F7FA',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  greeting: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1A1A2E',
+    marginBottom: 4,
   },
   title: {
     fontSize: 28,
@@ -335,21 +332,22 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#636e72',
-    textAlign: 'center',
+    fontSize: 14,
+    color: '#7C8BA0',
+    marginTop: 4,
   },
   locationSection: {
     padding: 20,
+    paddingTop: 10,
   },
   locationCard: {
-    borderRadius: 16,
+    borderRadius: 25,
     padding: 20,
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   locationHeader: {
     flexDirection: 'row',
@@ -389,23 +387,24 @@ const styles = StyleSheet.create({
   },
   featuresSection: {
     padding: 20,
+    paddingTop: 10,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2d3436',
+    fontWeight: '700',
+    color: '#1A1A2E',
     marginBottom: 16,
   },
   featureCard: {
     backgroundColor: 'white',
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 16,
     marginBottom: 12,
-    elevation: 2,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   featureHeader: {
     flexDirection: 'row',
@@ -418,36 +417,37 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2d3436',
+    color: '#1A1A2E',
     marginBottom: 4,
   },
   featureDescription: {
     fontSize: 14,
-    color: '#636e72',
+    color: '#7C8BA0',
     lineHeight: 20,
   },
   devicesSection: {
     padding: 20,
+    paddingTop: 10,
   },
   deviceCard: {
     backgroundColor: 'white',
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 16,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    elevation: 2,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   deviceIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F5F7FA',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -457,17 +457,17 @@ const styles = StyleSheet.create({
   deviceName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2d3436',
+    color: '#1A1A2E',
     marginBottom: 2,
   },
   deviceType: {
     fontSize: 12,
-    color: '#636e72',
+    color: '#7C8BA0',
     marginBottom: 2,
   },
   deviceLastSeen: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: '#7C8BA0',
   },
   deviceStatus: {
     alignItems: 'flex-end',
@@ -494,21 +494,22 @@ const styles = StyleSheet.create({
   },
   actionsSection: {
     padding: 20,
+    paddingTop: 10,
   },
   actionButton: {
     marginBottom: 12,
-    borderRadius: 12,
-    elevation: 2,
+    borderRadius: 15,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   actionButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 15,
     gap: 12,
   },
   actionButtonText: {

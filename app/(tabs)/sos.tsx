@@ -612,32 +612,6 @@ export default function SOSScreen() {
           </View>
         )}
 
-        {/* Quick Actions */}
-        <View style={styles.actionsSection}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          
-          <TouchableOpacity style={styles.actionButton} onPress={shareLocation}>
-            <LinearGradient colors={['#3498db', '#2980b9']} style={styles.actionButtonGradient}>
-              <Ionicons name="share-outline" size={24} color="white" />
-              <Text style={styles.actionButtonText}>Share My Location</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton}>
-            <LinearGradient colors={['#f39c12', '#e67e22']} style={styles.actionButtonGradient}>
-              <Ionicons name="people-outline" size={24} color="white" />
-              <Text style={styles.actionButtonText}>Contact Trusted People</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton}>
-            <LinearGradient colors={['#2ecc71', '#27ae60']} style={styles.actionButtonGradient}>
-              <Ionicons name="medical-outline" size={24} color="white" />
-              <Text style={styles.actionButtonText}>Medical Information</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-
         {/* Emergency Contacts */}
         <View style={styles.contactsSection}>
           <Text style={styles.sectionTitle}>Emergency Contacts</Text>
