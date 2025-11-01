@@ -5,18 +5,17 @@ import { useRouter } from 'expo-router';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import WalletConnector from '../components/WalletConnector';
 import { uploadImageSimple } from '../config/cloudinary';
@@ -75,14 +74,30 @@ export default function MintTouristIdScreen() {
       const profile = await getUserProfile(userId) as UserProfile | null;
       if (profile) {
         setExistingProfile(profile);
-        // Pre-fill form with existing data
+        // Pre-fill form with existing data (read-only)
         setFullName(profile.fullName || '');
         setNationality(profile.nationality || '');
         setPassportNumber(profile.passportNumber || '');
         setGovernmentId(profile.governmentId || '');
         setAge(profile.age || '');
         setGender(profile.gender || '');
-        setPhotoUri(profile.photoUrl || null);
+        setPhotoUri(profile.photo || profile.photoUrl || null);
+        
+        // Check if user already has blockchain data
+        if (profile.blockchainData && profile.blockchainData.tokenId) {
+          Alert.alert(
+            'Digital ID Already Minted',
+            'You already have a Digital Tourist ID. Redirecting to your profile.',
+            [{ text: 'OK', onPress: () => router.back() }]
+          );
+        }
+      } else {
+        // If no profile exists, redirect back to create profile first
+        Alert.alert(
+          'Profile Not Found',
+          'Please complete your profile first before minting a Digital ID.',
+          [{ text: 'OK', onPress: () => router.back() }]
+        );
       }
     } catch (error) {
       console.error('Error loading existing profile:', error);
@@ -277,188 +292,187 @@ export default function MintTouristIdScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {/* Header */}
-          <LinearGradient
-            colors={['#667eea', '#764ba2']}
-            style={styles.header}
-          >
+          {/* Modern Header */}
+          <View style={styles.header}>
             <TouchableOpacity 
               style={styles.backButton}
               onPress={() => router.back()}
             >
-              <Ionicons name="arrow-back" size={24} color="white" />
+              <Ionicons name="arrow-back" size={24} color="#1A1A2E" />
             </TouchableOpacity>
             
             <View style={styles.headerContent}>
-              <Ionicons name="shield-checkmark" size={64} color="white" />
-              <Text style={styles.headerTitle}>Mint Tourist ID</Text>
-              <Text style={styles.headerSubtitle}>
-                Create your secure blockchain-based digital identity
-              </Text>
+              <Text style={styles.headerTitle}>Create Digital ID</Text>
             </View>
-          </LinearGradient>
+          </View>
 
           <View style={styles.content}>
-            {/* Info Card */}
-            <View style={styles.infoCard}>
-              <LinearGradient
-                colors={['#74b9ff', '#0984e3']}
-                style={styles.infoCardGradient}
-              >
-                <Ionicons name="information-circle" size={24} color="white" />
-                <Text style={styles.infoCardText}>
-                  Your information will be encrypted and stored securely. Only you control access to your digital identity.
-                </Text>
-              </LinearGradient>
-            </View>
-
-            {/* Profile Photo */}
-            <View style={styles.photoSection}>
-              <Text style={styles.sectionTitle}>Profile Photo</Text>
-              <TouchableOpacity style={styles.photoContainer} onPress={pickImage}>
-                {photoUri ? (
-                  <Image source={{ uri: photoUri }} style={styles.photo} />
-                ) : (
-                  <View style={styles.photoPlaceholder}>
-                    <Ionicons name="camera" size={32} color="#999" />
-                    <Text style={styles.photoPlaceholderText}>Tap to add photo</Text>
+            {/* Profile Card with Photo */}
+            <View style={styles.profileCard}>
+              <View style={styles.profileHeader}>
+                <Text style={styles.cardTitle}>Your Profile</Text>
+                <View style={styles.readOnlyBadge}>
+                  <Ionicons name="lock-closed" size={12} color="#7C3AED" />
+                  <Text style={styles.readOnlyBadgeText}>Read-only</Text>
+                </View>
+              </View>
+              
+              <View style={styles.photoWrapper}>
+                <View style={styles.photoContainer}>
+                  {photoUri ? (
+                    <Image source={{ uri: photoUri }} style={styles.photo} />
+                  ) : (
+                    <View style={styles.photoPlaceholder}>
+                      <Ionicons name="person" size={48} color="#9CA3AF" />
+                    </View>
+                  )}
+                </View>
+                {photoUri && (
+                  <View style={styles.verifiedBadge}>
+                    <Ionicons name="checkmark-circle" size={24} color="#10B981" />
                   </View>
                 )}
-              </TouchableOpacity>
+              </View>
+              
+              <Text style={styles.photoNote}>
+                Profile data from your sign-in account
+              </Text>
             </View>
 
-            {/* Personal Information */}
-            <View style={styles.formSection}>
-              <Text style={styles.sectionTitle}>Personal Information</Text>
+            {/* Personal Information Card */}
+            <View style={styles.infoCard}>
+              <View style={styles.cardHeader}>
+                <Ionicons name="person-outline" size={24} color="#7C3AED" />
+                <Text style={styles.cardTitle}>Personal Details</Text>
+              </View>
               
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Full Name *</Text>
-                <TextInput
-                  style={styles.input}
-                  value={fullName}
-                  onChangeText={setFullName}
-                  placeholder="Enter your full legal name"
-                  placeholderTextColor="#999"
-                />
+              <View style={styles.infoRow}>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Full Name</Text>
+                  <Text style={styles.infoValue}>{fullName || 'Not provided'}</Text>
+                </View>
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Nationality *</Text>
-                <TextInput
-                  style={styles.input}
-                  value={nationality}
-                  onChangeText={setNationality}
-                  placeholder="Enter your nationality"
-                  placeholderTextColor="#999"
-                />
+              <View style={styles.infoRow}>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Nationality</Text>
+                  <Text style={styles.infoValue}>{nationality || 'Not provided'}</Text>
+                </View>
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Passport Number *</Text>
-                <TextInput
-                  style={styles.input}
-                  value={passportNumber}
-                  onChangeText={setPassportNumber}
-                  placeholder="Enter your passport number"
-                  placeholderTextColor="#999"
-                />
+              <View style={styles.infoRow}>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Passport Number</Text>
+                  <Text style={styles.infoValue}>{passportNumber || 'Not provided'}</Text>
+                </View>
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Government ID (Optional)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={governmentId}
-                  onChangeText={setGovernmentId}
-                  placeholder="Enter government ID number"
-                  placeholderTextColor="#999"
-                />
-              </View>
+              {governmentId && (
+                <View style={styles.infoRow}>
+                  <View style={styles.infoItem}>
+                    <Text style={styles.infoLabel}>Government ID</Text>
+                    <Text style={styles.infoValue}>{governmentId}</Text>
+                  </View>
+                </View>
+              )}
 
               <View style={styles.row}>
-                <View style={[styles.inputGroup, styles.halfWidth]}>
-                  <Text style={styles.inputLabel}>Age</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={age}
-                    onChangeText={setAge}
-                    placeholder="Age"
-                    keyboardType="numeric"
-                    placeholderTextColor="#999"
-                  />
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Age</Text>
+                  <Text style={styles.infoValue}>{age || 'N/A'}</Text>
                 </View>
-
-                <View style={[styles.inputGroup, styles.halfWidth]}>
-                  <Text style={styles.inputLabel}>Gender</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={gender}
-                    onChangeText={setGender}
-                    placeholder="Gender"
-                    placeholderTextColor="#999"
-                  />
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Gender</Text>
+                  <Text style={styles.infoValue}>{gender || 'N/A'}</Text>
                 </View>
               </View>
             </View>
 
-            {/* Progress Indicator */}
+            {/* Progress Steps */}
             {mintingStep !== 'profile' && (
-              <View style={styles.progressSection}>
-                <Text style={styles.sectionTitle}>Minting Progress</Text>
-                <View style={styles.progressContainer}>
-                  <View style={[styles.progressStep, styles.progressStepComplete]}>
-                    <Ionicons name="checkmark-circle" size={20} color="white" />
-                    <Text style={[styles.progressText, styles.progressTextComplete]}>Profile Saved</Text>
+              <View style={styles.progressCard}>
+                <View style={styles.progressHeader}>
+                  <Ionicons name="hourglass-outline" size={20} color="#7C3AED" />
+                  <Text style={styles.progressTitle}>Minting Progress</Text>
+                </View>
+                <View style={styles.stepsContainer}>
+                  <View style={styles.stepItem}>
+                    <View style={[styles.stepCircle, styles.stepComplete]}>
+                      <Ionicons name="checkmark" size={16} color="white" />
+                    </View>
+                    <Text style={styles.stepLabel}>Profile Saved</Text>
                   </View>
-                  <View style={[styles.progressStep, mintingStep === 'wallet' || mintingStep === 'minting' || mintingStep === 'complete' ? styles.progressStepActive : styles.progressStepInactive]}>
-                    <Ionicons name={mintingStep === 'complete' ? "checkmark-circle" : "wallet"} size={20} color={mintingStep === 'complete' ? "white" : mintingStep === 'wallet' || mintingStep === 'minting' ? "#667eea" : "#999"} />
-                    <Text style={[styles.progressText, mintingStep === 'complete' ? styles.progressTextComplete : mintingStep === 'wallet' || mintingStep === 'minting' ? styles.progressTextActive : styles.progressTextInactive]}>Wallet Connected</Text>
+                  <View style={styles.stepLine} />
+                  <View style={styles.stepItem}>
+                    <View style={[styles.stepCircle, mintingStep === 'wallet' || mintingStep === 'minting' || mintingStep === 'complete' ? styles.stepComplete : styles.stepPending]}>
+                      {mintingStep === 'complete' ? (
+                        <Ionicons name="checkmark" size={16} color="white" />
+                      ) : (
+                        <Ionicons name="wallet-outline" size={16} color={mintingStep === 'wallet' || mintingStep === 'minting' ? 'white' : '#9CA3AF'} />
+                      )}
+                    </View>
+                    <Text style={styles.stepLabel}>Wallet Connected</Text>
                   </View>
-                  <View style={[styles.progressStep, mintingStep === 'minting' || mintingStep === 'complete' ? styles.progressStepActive : styles.progressStepInactive]}>
-                    <Ionicons name={mintingStep === 'complete' ? "checkmark-circle" : "diamond"} size={20} color={mintingStep === 'complete' ? "white" : mintingStep === 'minting' ? "#667eea" : "#999"} />
-                    <Text style={[styles.progressText, mintingStep === 'complete' ? styles.progressTextComplete : mintingStep === 'minting' ? styles.progressTextActive : styles.progressTextInactive]}>NFT Minted</Text>
+                  <View style={styles.stepLine} />
+                  <View style={styles.stepItem}>
+                    <View style={[styles.stepCircle, mintingStep === 'complete' ? styles.stepComplete : mintingStep === 'minting' ? styles.stepActive : styles.stepPending]}>
+                      {mintingStep === 'complete' ? (
+                        <Ionicons name="checkmark" size={16} color="white" />
+                      ) : (
+                        <Ionicons name="cube-outline" size={16} color={mintingStep === 'minting' ? 'white' : '#9CA3AF'} />
+                      )}
+                    </View>
+                    <Text style={styles.stepLabel}>NFT Minted</Text>
                   </View>
                 </View>
               </View>
             )}
 
-            {/* Mint Button */}
+            {/* Action Button */}
             <TouchableOpacity
-              style={[styles.mintButton, loading && styles.mintButtonDisabled]}
+              style={[styles.actionButton, loading && styles.actionButtonDisabled]}
               onPress={mintingStep === 'profile' ? handleMintTouristId : handleMintNFT}
               disabled={loading}
+              activeOpacity={0.8}
             >
               <LinearGradient
-                colors={loading ? ['#ccc', '#999'] : mintingStep === 'profile' ? ['#667eea', '#764ba2'] : ['#ff6b6b', '#ee5a24']}
-                style={styles.mintButtonGradient}
+                colors={loading ? ['#9CA3AF', '#6B7280'] : ['#7C3AED', '#9333EA']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.actionButtonGradient}
               >
                 {loading ? (
-                  <View style={styles.loadingContainer}>
-                    <Text style={styles.mintButtonText}>
-                      {mintingStep === 'profile' ? 'Saving Profile...' : 'Minting NFT...'}
+                  <View style={styles.buttonContent}>
+                    <Ionicons name="hourglass-outline" size={22} color="white" />
+                    <Text style={styles.buttonText}>
+                      {mintingStep === 'profile' ? 'Processing...' : 'Minting...'}
                     </Text>
                   </View>
                 ) : (
-                  <View style={styles.mintButtonContent}>
+                  <View style={styles.buttonContent}>
                     <Ionicons 
-                      name={mintingStep === 'profile' ? "save" : "diamond"} 
-                      size={24} 
+                      name={mintingStep === 'profile' ? "rocket-outline" : "cube-outline"} 
+                      size={22} 
                       color="white" 
                     />
-                    <Text style={styles.mintButtonText}>
-                      {mintingStep === 'profile' ? 'Save Profile & Continue' : 'Create Digital ID'}
+                    <Text style={styles.buttonText}>
+                      {mintingStep === 'profile' ? 'Create Digital ID' : 'Mint NFT Now'}
                     </Text>
                   </View>
                 )}
               </LinearGradient>
             </TouchableOpacity>
 
-            <Text style={styles.disclaimer}>
-              {mintingStep === 'profile' 
-                ? '* Required fields. Your data will be encrypted and secured using blockchain technology.'
-                : 'Make sure you have at least 0.01 MATIC for gas fees'
-              }
-            </Text>
+            {/* Disclaimer */}
+            <View style={styles.disclaimerCard}>
+              <Ionicons name="information-circle-outline" size={16} color="#7C8BA0" />
+              <Text style={styles.disclaimerText}>
+                {mintingStep === 'profile' 
+                  ? 'Your data will be encrypted and secured on the blockchain'
+                  : 'You need at least 0.01 MATIC for gas fees'
+                }
+              </Text>
+            </View>
           </View>
         </ScrollView>
 
@@ -477,7 +491,7 @@ export default function MintTouristIdScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F5F7FA',
   },
   keyboardView: {
     flex: 1,
@@ -486,79 +500,129 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingTop: 20,
-    paddingBottom: 30,
+    paddingTop: Platform.OS === 'android' ? 50 : 60,
+    paddingBottom: 24,
     paddingHorizontal: 20,
-    position: 'relative',
+    backgroundColor: '#F5F7FA',
   },
   backButton: {
     position: 'absolute',
-    top: 20,
+    top: Platform.OS === 'android' ? 50 : 60,
     left: 20,
-    zIndex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 20,
-    padding: 8,
+    zIndex: 10,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   headerContent: {
     alignItems: 'center',
-    marginTop: 40,
+    marginTop: 12,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: 'white',
-    marginTop: 16,
-    marginBottom: 8,
+    color: '#1A1A2E',
+    marginBottom: 6,
   },
   headerSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 15,
+    color: '#7C8BA0',
     textAlign: 'center',
-    lineHeight: 24,
   },
   content: {
     padding: 20,
   },
-  infoCard: {
-    marginBottom: 30,
-    borderRadius: 12,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  infoCardGradient: {
+  // Blockchain Banner
+  blockchainBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    gap: 12,
+    padding: 18,
+    borderRadius: 20,
+    marginBottom: 24,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  infoCardText: {
+  bannerIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  bannerContent: {
     flex: 1,
-    color: 'white',
-    fontSize: 14,
-    lineHeight: 20,
   },
-  photoSection: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 20,
+  bannerTitle: {
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#2d3436',
+    color: 'white',
+    marginBottom: 4,
+  },
+  bannerText: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.9)',
+    lineHeight: 18,
+  },
+  // Profile Card
+  profileCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1A1A2E',
+  },
+  readOnlyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    gap: 4,
+  },
+  readOnlyBadgeText: {
+    fontSize: 12,
+    color: '#7C3AED',
+    fontWeight: '600',
+  },
+  photoWrapper: {
+    alignItems: 'center',
     marginBottom: 16,
+    position: 'relative',
   },
   photoContainer: {
-    alignSelf: 'center',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     overflow: 'hidden',
     borderWidth: 3,
-    borderColor: '#667eea',
+    borderColor: '#7C3AED',
+    backgroundColor: '#F5F7FA',
   },
   photo: {
     width: '100%',
@@ -567,124 +631,170 @@ const styles = StyleSheet.create({
   photoPlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#f1f2f6',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F5F7FA',
   },
-  photoPlaceholderText: {
-    color: '#999',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  formSection: {
-    marginBottom: 30,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2d3436',
-    marginBottom: 8,
-  },
-  input: {
+  verifiedBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: '32%',
     backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 12,
-    paddingHorizontal: 16,
+    padding: 2,
+  },
+  photoNote: {
+    fontSize: 12,
+    color: '#7C8BA0',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  // Info Card
+  infoCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 10,
+  },
+  infoRow: {
     paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  infoItem: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 13,
+    color: '#7C8BA0',
+    marginBottom: 6,
+    fontWeight: '500',
+  },
+  infoValue: {
     fontSize: 16,
-    color: '#2d3436',
+    color: '#1A1A2E',
+    fontWeight: '600',
   },
   row: {
     flexDirection: 'row',
     gap: 16,
   },
-  halfWidth: {
+  // Progress Card
+  progressCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 8,
+  },
+  progressTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1A1A2E',
+  },
+  stepsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  stepItem: {
+    alignItems: 'center',
     flex: 1,
   },
-  mintButton: {
-    marginTop: 20,
+  stepCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  stepComplete: {
+    backgroundColor: '#10B981',
+  },
+  stepActive: {
+    backgroundColor: '#7C3AED',
+  },
+  stepPending: {
+    backgroundColor: '#E5E7EB',
+  },
+  stepLabel: {
+    fontSize: 11,
+    color: '#7C8BA0',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  stepLine: {
+    flex: 0.5,
+    height: 2,
+    backgroundColor: '#E5E7EB',
+    marginHorizontal: 8,
+  },
+  // Action Button
+  actionButton: {
+    borderRadius: 20,
+    overflow: 'hidden',
     marginBottom: 16,
-    borderRadius: 16,
-    elevation: 8,
-    shadowColor: '#000',
+    shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
+    elevation: 6,
   },
-  mintButtonDisabled: {
-    elevation: 2,
+  actionButtonDisabled: {
     shadowOpacity: 0.1,
+    elevation: 2,
   },
-  mintButtonGradient: {
-    padding: 18,
-    borderRadius: 16,
+  actionButtonGradient: {
+    paddingVertical: 18,
+    paddingHorizontal: 24,
     alignItems: 'center',
   },
-  mintButtonContent: {
+  buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
-  mintButtonText: {
+  buttonText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 'bold',
   },
-  loadingContainer: {
-    alignItems: 'center',
-  },
-  disclaimer: {
-    fontSize: 12,
-    color: '#636e72',
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: 30,
-  },
-  progressSection: {
-    marginBottom: 30,
-  },
-  progressContainer: {
+  // Disclaimer
+  disclaimerCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 16,
+    backgroundColor: '#F9FAFB',
+    padding: 14,
+    borderRadius: 16,
+    gap: 10,
+    marginBottom: 30,
   },
-  progressStep: {
+  disclaimerText: {
     flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    marginHorizontal: 4,
-  },
-  progressStepComplete: {
-    backgroundColor: '#2ecc71',
-  },
-  progressStepActive: {
-    backgroundColor: '#e8f0fe',
-    borderWidth: 2,
-    borderColor: '#667eea',
-  },
-  progressStepInactive: {
-    backgroundColor: '#f8f9fa',
-  },
-  progressText: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  progressTextComplete: {
-    color: 'white',
-  },
-  progressTextActive: {
-    color: '#667eea',
-  },
-  progressTextInactive: {
-    color: '#999',
+    fontSize: 13,
+    color: '#7C8BA0',
+    lineHeight: 18,
   },
 });
