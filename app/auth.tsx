@@ -5,17 +5,17 @@ import { StatusBar } from 'expo-status-bar';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { auth } from '../config/firebase';
 import { saveUserToStorage } from '../services/authStorageService';
@@ -62,7 +62,7 @@ export default function AuthScreen() {
         
         Alert.alert(
           'Account Created!',
-          'Now let\'s create your digital tourist ID for enhanced security and seamless travel.',
+          'Welcome to Guardio! Let\'s complete your profile to get started.',
           [{ text: 'Continue', onPress: () => router.push('/personal-id') }]
         );
       } else {
@@ -78,10 +78,10 @@ export default function AuthScreen() {
         
         Alert.alert(
           'Welcome Back!',
-          'Complete your digital tourist ID setup for the best experience.',
+          'Complete your profile setup for the best experience.',
           [
             { text: 'Skip for now', onPress: () => router.replace('/(tabs)') },
-            { text: 'Complete ID', onPress: () => router.push('/personal-id') }
+            { text: 'Complete Profile', onPress: () => router.push('/personal-id') }
           ]
         );
       }
@@ -135,7 +135,7 @@ export default function AuthScreen() {
       
       Alert.alert(
         'Google Sign In Successful!',
-        'You\'ve been signed in with Google. Now let\'s create your digital tourist ID.',
+        'Welcome to Guardio! Let\'s set up your profile.',
         [{ text: 'Continue', onPress: () => router.push('/personal-id') }]
       );
       

@@ -5,15 +5,16 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Image,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Image,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { uploadImageSimple } from '../config/cloudinary';
 import { auth } from '../config/firebase';
@@ -21,6 +22,9 @@ import { saveUserProfile } from '../services/userService';
 
 export default function PersonalIdentificationScreen() {
   const router = useRouter();
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 4;
+  
   const [formData, setFormData] = useState({
     fullName: '',
     nationality: '',
@@ -57,6 +61,36 @@ export default function PersonalIdentificationScreen() {
 
     checkAuth();
   }, [router]);
+
+  const handleNext = () => {
+    // Validation for each step
+    if (currentStep === 1 && !formData.photo) {
+      Alert.alert('Photo Required', 'Please add your photo to continue.');
+      return;
+    }
+    if (currentStep === 2 && (!formData.fullName || !formData.nationality)) {
+      Alert.alert('Required Fields', 'Please fill in your name and nationality.');
+      return;
+    }
+    if (currentStep === 3 && !formData.passportNumber) {
+      Alert.alert('Required Field', 'Please enter your passport number.');
+      return;
+    }
+    if (currentStep === 4 && (!formData.age || !formData.gender)) {
+      Alert.alert('Required Fields', 'Please fill in your age and gender.');
+      return;
+    }
+    
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -206,8 +240,8 @@ export default function PersonalIdentificationScreen() {
       
       setLoading(false);
       Alert.alert(
-        'Digital Tourist ID Created!',
-        'Your profile has been saved successfully to Firebase database. Your digital tourist ID has been created and registered.',
+        'Profile Created! 🎉',
+        'Your profile has been saved successfully. Welcome to Guardio!',
         [
           {
             text: 'Continue',
@@ -219,7 +253,7 @@ export default function PersonalIdentificationScreen() {
       setLoading(false);
       Alert.alert(
         'Error',
-        'Failed to create your digital tourist ID. Please try again.',
+        'Failed to create your profile. Please try again.',
         [{ text: 'OK' }]
       );
       console.error('Error saving profile:', error);
@@ -230,7 +264,7 @@ export default function PersonalIdentificationScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
       <LinearGradient
-        colors={['#667eea', '#764ba2', '#667eea']}
+        colors={['#7C3AED', '#9333EA']}
         style={styles.gradient}
       >
         <ScrollView
@@ -246,173 +280,252 @@ export default function PersonalIdentificationScreen() {
             >
               <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
-            <Text style={styles.title}>Digital Tourist ID</Text>
+            <Text style={styles.title}>Complete Your Profile</Text>
             <Text style={styles.subtitle}>
-              Create your blockchain-based identification
+              Step {currentStep} of {totalSteps}
             </Text>
+          </View>
+
+          {/* Progress Bar */}
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: `${(currentStep / totalSteps) * 100}%` }]} />
+            </View>
+            <View style={styles.stepsIndicator}>
+              {[1, 2, 3, 4].map((step) => (
+                <View key={step} style={styles.stepDot}>
+                  <View style={[
+                    styles.stepCircle,
+                    currentStep >= step && styles.stepCircleActive,
+                    currentStep === step && styles.stepCircleCurrent
+                  ]}>
+                    {currentStep > step ? (
+                      <Ionicons name="checkmark" size={12} color="#fff" />
+                    ) : (
+                      <Text style={[styles.stepNumber, currentStep >= step && styles.stepNumberActive]}>
+                        {step}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
           </View>
 
           {/* Form Container */}
           <View style={styles.formContainer}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="person-circle-outline" size={24} color="#667eea" />
-              <Text style={styles.sectionTitle}>Personal Identification</Text>
-            </View>
-
-            {/* Photo Upload */}
-            <View style={styles.photoSection}>
-              <Text style={styles.fieldLabel}>Tourist Photo *</Text>
-              <TouchableOpacity style={styles.photoContainer} onPress={showPhotoOptions}>
-                {formData.photo ? (
-                  <Image source={{ uri: formData.photo }} style={styles.photoPreview} />
-                ) : (
-                  <View style={styles.photoPlaceholder}>
-                    <Ionicons name="camera-outline" size={48} color="#888" />
-                    <Text style={styles.photoPlaceholderText}>Tap to add photo</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-              <Text style={styles.fieldNote}>
-                Required for ID verification. Photo will be securely stored on blockchain.
-              </Text>
-            </View>
-
-            {/* Full Name */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>Full Name (as per passport) *</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="person-outline" size={20} color="#888" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your full legal name"
-                  placeholderTextColor="#888"
-                  value={formData.fullName}
-                  onChangeText={(value) => handleInputChange('fullName', value)}
-                  autoCapitalize="words"
-                />
-              </View>
-            </View>
-
-            {/* Nationality */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>Nationality / Country of Origin *</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="flag-outline" size={20} color="#888" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g., United States, United Kingdom"
-                  placeholderTextColor="#888"
-                  value={formData.nationality}
-                  onChangeText={(value) => handleInputChange('nationality', value)}
-                  autoCapitalize="words"
-                />
-              </View>
-            </View>
-
-            {/* Passport Number */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>Passport Number *</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="document-outline" size={20} color="#888" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter passport number"
-                  placeholderTextColor="#888"
-                  value={formData.passportNumber}
-                  onChangeText={(value) => handleInputChange('passportNumber', value.toUpperCase())}
-                  autoCapitalize="characters"
-                />
-              </View>
-            </View>
-
-            {/* Government ID (Optional) */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>Government ID (Optional)</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="card-outline" size={20} color="#888" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Driver's license, National ID, etc."
-                  placeholderTextColor="#888"
-                  value={formData.governmentId}
-                  onChangeText={(value) => handleInputChange('governmentId', value)}
-                />
-              </View>
-            </View>
-
-            {/* Age and Gender Row */}
-            <View style={styles.rowContainer}>
-              <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                <Text style={styles.fieldLabel}>Age *</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="calendar-outline" size={20} color="#888" style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Age"
-                    placeholderTextColor="#888"
-                    value={formData.age}
-                    onChangeText={(value) => handleInputChange('age', value)}
-                    keyboardType="numeric"
-                    maxLength={3}
-                  />
+            {/* Step 1: Photo Upload */}
+            {currentStep === 1 && (
+              <>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="camera-outline" size={24} color="#7C3AED" />
+                  <Text style={styles.sectionTitle}>Profile Photo</Text>
                 </View>
-              </View>
 
-              <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-                <Text style={styles.fieldLabel}>Gender *</Text>
-                <TouchableOpacity
-                  style={styles.inputContainer}
-                  onPress={() => setShowGenderPicker(!showGenderPicker)}
-                >
-                  <Ionicons name="person-outline" size={20} color="#888" style={styles.inputIcon} />
-                  <Text style={[styles.input, { paddingTop: 15, color: formData.gender ? '#333' : '#888' }]}>
-                    {formData.gender || 'Select gender'}
-                  </Text>
-                  <Ionicons name="chevron-down" size={20} color="#888" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Gender Picker */}
-            {showGenderPicker && (
-              <View style={styles.genderPicker}>
-                {genderOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option}
-                    style={styles.genderOption}
-                    onPress={() => {
-                      handleInputChange('gender', option);
-                      setShowGenderPicker(false);
-                    }}
-                  >
-                    <Text style={styles.genderOptionText}>{option}</Text>
+                <View style={styles.photoSection}>
+                  <Text style={styles.fieldLabel}>Profile Photo *</Text>
+                  <TouchableOpacity style={styles.photoContainer} onPress={showPhotoOptions}>
+                    {formData.photo ? (
+                      <Image source={{ uri: formData.photo }} style={styles.photoPreview} />
+                    ) : (
+                      <View style={styles.photoPlaceholder}>
+                        <Ionicons name="camera-outline" size={48} color="#9CA3AF" />
+                        <Text style={styles.photoPlaceholderText}>Add your photo</Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
-                ))}
-              </View>
+                  <Text style={styles.fieldNote}>
+                    This helps us verify your identity
+                  </Text>
+                </View>
+              </>
             )}
 
-            {/* Blockchain Notice */}
-            <View style={styles.blockchainNotice}>
-              <Ionicons name="shield-checkmark" size={24} color="#28a745" />
-              <View style={styles.noticeTextContainer}>
-                <Text style={styles.noticeTitle}>Blockchain Security</Text>
-                <Text style={styles.noticeText}>
-                  Your digital ID will be securely stored on blockchain technology, ensuring immutability and privacy protection.
-                </Text>
-              </View>
-            </View>
+            {/* Step 2: Name and Nationality */}
+            {currentStep === 2 && (
+              <>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="person-circle-outline" size={24} color="#7C3AED" />
+                  <Text style={styles.sectionTitle}>Basic Information</Text>
+                </View>
 
-            {/* Submit Button */}
-            <TouchableOpacity
-              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-              onPress={handleSubmit}
-              disabled={loading}
-            >
-              <Ionicons name="shield-checkmark" size={20} color="#fff" style={styles.buttonIcon} />
-              <Text style={styles.submitButtonText}>
-                {loading ? 'Creating Digital ID...' : 'Create Digital Tourist ID'}
-              </Text>
-            </TouchableOpacity>
+                {/* Full Name */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.fieldLabel}>Full Name *</Text>
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="person-outline" size={20} color="#7C8BA0" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter your full name"
+                      placeholderTextColor="#9CA3AF"
+                      value={formData.fullName}
+                      onChangeText={(value) => handleInputChange('fullName', value)}
+                      autoCapitalize="words"
+                    />
+                  </View>
+                </View>
+
+                {/* Nationality */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.fieldLabel}>Nationality *</Text>
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="flag-outline" size={20} color="#7C8BA0" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Your country"
+                      placeholderTextColor="#9CA3AF"
+                      value={formData.nationality}
+                      onChangeText={(value) => handleInputChange('nationality', value)}
+                      autoCapitalize="words"
+                    />
+                  </View>
+                </View>
+              </>
+            )}
+
+            {/* Step 3: Passport and Government ID */}
+            {currentStep === 3 && (
+              <>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="document-text-outline" size={24} color="#7C3AED" />
+                  <Text style={styles.sectionTitle}>Identity Documents</Text>
+                </View>
+
+                {/* Passport Number */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.fieldLabel}>Passport Number *</Text>
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="document-outline" size={20} color="#7C8BA0" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Passport number"
+                      placeholderTextColor="#9CA3AF"
+                      value={formData.passportNumber}
+                      onChangeText={(value) => handleInputChange('passportNumber', value.toUpperCase())}
+                      autoCapitalize="characters"
+                    />
+                  </View>
+                </View>
+
+                {/* Government ID (Optional) */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.fieldLabel}>Government ID (Optional)</Text>
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="card-outline" size={20} color="#7C8BA0" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="National ID, Driver's license, etc."
+                      placeholderTextColor="#9CA3AF"
+                      value={formData.governmentId}
+                      onChangeText={(value) => handleInputChange('governmentId', value)}
+                    />
+                  </View>
+                </View>
+              </>
+            )}
+
+            {/* Step 4: Age and Gender */}
+            {currentStep === 4 && (
+              <>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="person-outline" size={24} color="#7C3AED" />
+                  <Text style={styles.sectionTitle}>Additional Details</Text>
+                </View>
+
+                {/* Age and Gender Row */}
+                <View style={styles.rowContainer}>
+                  <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.fieldLabel}>Age *</Text>
+                    <View style={styles.inputContainer}>
+                      <Ionicons name="calendar-outline" size={20} color="#7C8BA0" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Age"
+                        placeholderTextColor="#9CA3AF"
+                        value={formData.age}
+                        onChangeText={(value) => handleInputChange('age', value)}
+                        keyboardType="numeric"
+                        maxLength={3}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                    <Text style={styles.fieldLabel}>Gender *</Text>
+                    <TouchableOpacity
+                      style={styles.inputContainer}
+                      onPress={() => setShowGenderPicker(!showGenderPicker)}
+                    >
+                      <Ionicons name="person-outline" size={20} color="#7C8BA0" style={styles.inputIcon} />
+                      <Text style={[styles.input, { paddingTop: 15, color: formData.gender ? '#1A1A2E' : '#9CA3AF' }]}>
+                        {formData.gender || 'Select'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={20} color="#7C8BA0" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Gender Picker */}
+                {showGenderPicker && (
+                  <View style={styles.genderPicker}>
+                    {genderOptions.map((option) => (
+                      <TouchableOpacity
+                        key={option}
+                        style={styles.genderOption}
+                        onPress={() => {
+                          handleInputChange('gender', option);
+                          setShowGenderPicker(false);
+                        }}
+                      >
+                        <Text style={styles.genderOptionText}>{option}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+
+                {/* Security Notice */}
+                <View style={styles.securityNotice}>
+                  <Ionicons name="shield-checkmark-outline" size={24} color="#10B981" />
+                  <View style={styles.noticeTextContainer}>
+                    <Text style={styles.noticeTitle}>Secure & Private</Text>
+                    <Text style={styles.noticeText}>
+                      Your information is encrypted and stored securely. We protect your privacy.
+                    </Text>
+                  </View>
+                </View>
+              </>
+            )}
+
+            {/* Navigation Buttons */}
+            <View style={styles.navigationButtons}>
+              {currentStep > 1 && (
+                <TouchableOpacity
+                  style={[styles.navButton, styles.previousButton]}
+                  onPress={handlePrevious}
+                >
+                  <Text style={[styles.navButtonText, styles.previousButtonText]}>Previous</Text>
+                </TouchableOpacity>
+              )}
+              
+              {currentStep < totalSteps ? (
+                <TouchableOpacity
+                  style={[styles.navButton, styles.nextButton, currentStep === 1 && { flex: 1 }]}
+                  onPress={handleNext}
+                >
+                  <Text style={[styles.navButtonText, styles.nextButtonText]}>Next</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.navButton, styles.nextButton]}
+                  onPress={handleSubmit}
+                  disabled={loading}
+                >
+                  <Text style={[styles.navButtonText, styles.nextButtonText]}>
+                    {loading ? 'Saving...' : 'Complete Profile'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </ScrollView>
       </LinearGradient>
@@ -435,8 +548,8 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 30,
+    paddingTop: Platform.OS === 'android' ? 50 : 60,
+    paddingBottom: 20,
     alignItems: 'center',
   },
   backButton: {
@@ -478,50 +591,51 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 19,
+    fontWeight: 'bold',
+    color: '#1A1A2E',
     marginLeft: 12,
   },
   photoSection: {
     marginBottom: 24,
+    alignItems: 'center',
   },
   fieldLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    color: '#1A1A2E',
+    marginBottom: 10,
   },
   fieldNote: {
     fontSize: 12,
-    color: '#666',
+    color: '#7C8BA0',
     marginTop: 8,
-    fontStyle: 'italic',
+    textAlign: 'center',
   },
   photoContainer: {
     alignItems: 'center',
   },
   photoPreview: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     borderWidth: 3,
-    borderColor: '#667eea',
+    borderColor: '#7C3AED',
   },
   photoPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#f8f9fa',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#F5F7FA',
     borderWidth: 2,
-    borderColor: '#e9ecef',
+    borderColor: '#E5E7EB',
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
   },
   photoPlaceholderText: {
-    fontSize: 12,
-    color: '#888',
+    fontSize: 13,
+    color: '#7C8BA0',
     marginTop: 8,
     textAlign: 'center',
   },
@@ -531,12 +645,12 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
   },
   inputIcon: {
     marginRight: 12,
@@ -545,7 +659,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 50,
     fontSize: 16,
-    color: '#333',
+    color: '#1A1A2E',
   },
   rowContainer: {
     flexDirection: 'row',
@@ -577,39 +691,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  blockchainNotice: {
+  securityNotice: {
     flexDirection: 'row',
-    backgroundColor: '#f8fff9',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#F0FDF4',
+    borderRadius: 16,
+    padding: 18,
     marginVertical: 20,
     borderWidth: 1,
-    borderColor: '#d4edda',
+    borderColor: '#BBF7D0',
   },
   noticeTextContainer: {
     flex: 1,
     marginLeft: 12,
   },
   noticeTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#28a745',
+    color: '#10B981',
     marginBottom: 4,
   },
   noticeText: {
-    fontSize: 12,
-    color: '#155724',
-    lineHeight: 16,
+    fontSize: 13,
+    color: '#059669',
+    lineHeight: 18,
   },
   submitButton: {
-    backgroundColor: '#667eea',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: '#7C3AED',
+    borderRadius: 16,
+    paddingVertical: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
-    shadowColor: '#667eea',
+    shadowColor: '#7C3AED',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -626,7 +740,94 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: '#fff',
+    fontSize: 17,
+    fontWeight: 'bold',
+  },
+  // Progress bar styles
+  progressContainer: {
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 2,
+  },
+  stepsIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+  },
+  stepDot: {
+    alignItems: 'center',
+  },
+  stepCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stepCircleActive: {
+    backgroundColor: '#fff',
+  },
+  stepCircleCurrent: {
+    backgroundColor: '#fff',
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  stepNumber: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: 'rgba(255, 255, 255, 0.6)',
+  },
+  stepNumberActive: {
+    color: '#7C3AED',
+  },
+  // Navigation button styles
+  navigationButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 12,
+  },
+  navButton: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previousButton: {
+    backgroundColor: '#E5E7EB',
+  },
+  nextButton: {
+    backgroundColor: '#7C3AED',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  navButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  previousButtonText: {
+    color: '#6B7280',
+  },
+  nextButtonText: {
+    color: '#fff',
   },
 });
